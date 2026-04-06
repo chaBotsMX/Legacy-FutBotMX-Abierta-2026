@@ -88,7 +88,7 @@ void loop() {
     Serial.println(ballY);
     Serial.print(" angulo: ");
     if(ballX != 2000){
-    ballX = ballX - 320;
+    ballX = ballX - 160;
     //Serial.print(ballX);
     ballAng = atan2(ballX,ballY)* 180 / 3.1415;
     if (ballAng < 0){
@@ -99,9 +99,12 @@ void loop() {
     }
     }
     else{ballAng = 500;}
+    if(ballX < 180 - 160 && ballX > 130 - 160&& ballY < 20){
+      ballAng = 0;
+    }
     Serial.println(ballAng);
 
   }
   Serial5.write(ballAng/2);
-  // put your main code   here, to run repeatedly:
+
 }
