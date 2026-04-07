@@ -25,7 +25,7 @@ sensor.skip_frames(time=2000)
 lcd.init()
 sensor.run(1)
 
-threshold = (0, 100, 11, 127, 4, 127)
+threshold = (42, 100, 16, 127, 3, 127)
 
 START_BYTE = 0xAA
 END_BYTE = 0x55

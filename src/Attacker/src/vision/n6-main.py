@@ -13,13 +13,14 @@ goalTresholds = [
 START_BYTE_1 = 0xAA
 START_BYTE_2 = 0x55
 
-uart = UART(4, 115200)
+uart = UART(1, 115200)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
-sensor.set_auto_gain(False,gain_db=30)
+sensor.set_auto_gain(False,gain_db=10)
 sensor.set_auto_exposure(False, exposure_us=2000)
+sensor.set_framerate(120)
 sensor.skip_frames(time=2000)
 
 clock = time.clock()
