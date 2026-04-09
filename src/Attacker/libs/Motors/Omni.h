@@ -1,17 +1,17 @@
 /**
- * @file Motors.h
+ * @file Omni.h
  * 
  * @author Roy Ivan Barron Martinez / chaBotsMX
  * @date 29/03/26
  */
 
-#ifndef Motors_H
-#define Motors_H
+#ifndef OMNI_H
+#define OMNI_H
 
+#include "Motor.h"
 #include <Arduino.h>
 
 #define NUM_MOTORS 4
-#define NUM_PINS 2
 
 #define MOTOR_1_A 5
 #define MOTOR_1_B 4
@@ -31,19 +31,20 @@
 
 #define PI acos((long double)-1);
 
-class Motors {
+class Omni {
   public:
-    Motors();
+    Omni();
 
     void motorMove(int mot, int pot);
-    void omni(int angle, int power,int rotation);
+    void move(int angle, int power,int rotation);
 
   private:
-    int motors[NUM_MOTORS][NUM_PINS] = {
-      {MOTOR_1_A, MOTOR_1_B},
-      {MOTOR_2_A, MOTOR_2_B},
-      {MOTOR_3_A, MOTOR_3_B},
-      {MOTOR_4_A, MOTOR_4_B},
+    int prevRot = -1;
+    Motor motors[NUM_MOTORS] = {
+        Motor(MOTOR_1_A, MOTOR_1_B),
+        Motor(MOTOR_2_A, MOTOR_2_B),
+        Motor(MOTOR_3_A, MOTOR_3_B),
+        Motor(MOTOR_4_A, MOTOR_4_B),
     };
 };
 
