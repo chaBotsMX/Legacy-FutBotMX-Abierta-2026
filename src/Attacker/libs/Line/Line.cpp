@@ -4,26 +4,30 @@
  * 
  * @author Roy Ivan Barron Martinez / chaBotsMX
  * @date 06/04/26
- */
+**/
 
 #include "Line.h"
 
-Line::Line(int _threshold) {
-  pinMode(13, OUTPUT);
+Line::Line(int threshold = 300) {
+  pinMode(LED_PIN, OUTPUT);
   analogReadResolution(12);
-  delay(1000);
-  threshold = _threshold;
-}
-int Line::getLineSector(float lineAngle) {
-    //Esta funcion obitiene el sector actual de la linea,
-    //La informacion se utiliza para evitar que el robot al pasar de la mitad de la linea voltee la normal y
-    //acelere hacia la pared en vez de regresar al campo.
-  while (lineAngle < -15) lineAngle += 360;
-  while (lineAngle >= 345) lineAngle -= 360;
 
-  for (int i = 0; i < 12; i++) {
-    int lower = -15 + (i * 30);
-    int upper =  15 + (i * 30);
+  delay(STARTUP_DELAY);
+
+  this->threshold = threshold;
+  calculateSinAndCos();
+}
+
+int Line::getLineSector(float lineAngle) {
+  //Esta funcion obitiene el sector actual de la linea,
+  //La informacion se utiliza para evitar que el robot al pasar de la mitad de la linea voltee la normal y
+  //acelere hacia la pared en vez de regresar al campo.
+  while (lineAngle < LOWER_ANGLE_BOUND) lineAngle += 360;
+  while (lineAngle >= UPPER_ANGLE_BOUND) lineAngle -= 360;
+
+  for (int i = 0; i < NUM_SECTORS; i++) {
+    int lower = (i * SECTOR_ANGLE_STEP) - SECTOR_OFFSET;
+    int upper = (i * SECTOR_ANGLE_STEP) + SECTOR_OFFSET;
 
     if (lineAngle >= lower && lineAngle < upper) {
       return i;
@@ -31,32 +35,25 @@ int Line::getLineSector(float lineAngle) {
   }
 
   return -1;
-
 }
+
 int Line::lineSwitch(int sector, int lastSector) {
     //Funcion que detecta si se paso la mitad de la linea
     //si se paso, regresa el sector inicial en vez del actual.
-    int angle = sector * 30;
+    int angle = sector * SECTOR_ANGLE_STEP;
 
-    if (lastSector <= 3) {
-        if (3 + lastSector <= sector && sector <= 8 + lastSector) {
-        if (sector == 3) angle = 90;
-        else angle = lastSector * 30;
-        }
+    if (lastSector <= 3 && 3 + lastSector <= sector && sector <= 8 + lastSector) {
+      if (sector == 3) angle = 90;
+      else angle = lastSector * 30;
     }
-    else if (4 <= lastSector && lastSector <= 8) {
-        if (sector <= lastSector - 4 || lastSector + 3 <= sector) {
-        angle = lastSector * 30;
-        }
+    else if (4 <= lastSector && lastSector <= 8 && sector <= lastSector - 4 || lastSector + 3 <= sector) {
+      angle = lastSector * 30;
     }
-    else if (9 <= lastSector) {
-        if (lastSector - 9 <= sector && sector <= lastSector - 4) {
-        angle = lastSector * 30;
-        }
+    else if (9 <= lastSector && lastSector - 9 <= sector && sector <= lastSector - 4) {
+      angle = lastSector * 30;
     }
 
-    angle = (angle % 360 + 360) % 360;
-    return angle;
+    return (angle % 360 + 360) % 360;
 }
 
 
@@ -64,13 +61,13 @@ int Line::adjustLineAngle(int angle) {
     //Funcion que retorna el angulo opuesto al que se le da,
     //se utiliza como el angulo objetivo del robot al que debe de ir si detecta linea
     if (angle >= 0 && angle < 180) {
-        return angle + 180;
+      return angle + 180;
     }
-    else if (angle <= 360 && angle >= 180) {
-        return angle - 180;
+    else if (angle >= 180 && angle <= 360) {
+      return angle - 180;
     }
     else {
-        return angle;
+      return angle;
     }
 }
 
@@ -78,53 +75,58 @@ void Line::update() {
   float sumCos = 0;
   float sumSin = 0;
   int numRead = 0;
-  for (int i = 0; i < 15; i++) {
+
+  for (int i = 0; i < NUM_SENSORS; i++) {
     int val = analogRead(analogs[i]);
-    val = (val > threshold) ? 1 : 0;
+    val = (val > LINE_THRESHOLD) ? 1 : 0;
     detectedSensors[i] = val;
+
 //    Serial.print(val);
 //    Serial.print(" ");
-    if (val == 1) {
-      numRead++;
-      sumCos += cosenos[i];
-      sumSin += senos[i];
-    }
+
+    if (!val) continue;
+
+    numRead++;
+    sumCos += cosenos[i];
+    sumSin += senos[i];
   }
 //  Serial.println();
 
-  if (numRead == 0) {
-    angle = 500;
+  if (!numRead) {
+    angle = BALL_OUT_OF_RANGE;
     sector = -1;
     firstSector = -1;
-    fixedLineAngle = 500;
-    avoidAngle = 500;
-    firstDetected = false;
+    fixedLineAngle = BALL_OUT_OF_RANGE;
+    avoidAngle = BALL_OUT_OF_RANGE;
+    firstSectorDetected = false;
 
-    digitalWrite(13, LOW);
+    digitalWrite(LED_PIN, LOW);
   } else {
-    angle = atan2(sumSin, sumCos) * 180.0 / 3.14159265;
+    angle = atan2(sumSin, sumCos) * 180.0 / PI;
     if (angle < 0) angle += 360.0;
-
 
     sector = getLineSector(angle);
 
-    if (!firstDetected && sector != -1) {
+    if (!firstSectorDetected && sector != -1) {
       firstSector = sector;
-      firstDetected = true;
+      firstSectorDetected = true;
     }
 
     if (sector != -1 && firstSector != -1) {
       fixedLineAngle = lineSwitch(sector, firstSector);
       avoidAngle = adjustLineAngle(fixedLineAngle);
     } else {
-      fixedLineAngle = 500;
-      avoidAngle = 500;
+      fixedLineAngle = BALL_OUT_OF_RANGE;
+      avoidAngle = BALL_OUT_OF_RANGE;
     }
 
-    digitalWrite(13, HIGH);
+    digitalWrite(LED_PIN, HIGH);
   }
 }
 
-int Line::getAvoidAngle() {
-  return avoidAngle;
+void Line::calculateSinAndCos() {
+  for(float angle = 0.0, int sensorIdx = 0; angle <= 360.0; angle += LINE_SENSOR_ANGLE_STEP, sensorIdx++) {
+    cosenos[sensorIdx] = cos(angle * PI / 180.0);
+    senos[sensorIdx] = sin(angle * PI / 180.0);
+  }
 }

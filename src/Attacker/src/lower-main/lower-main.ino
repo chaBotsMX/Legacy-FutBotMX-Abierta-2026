@@ -1,20 +1,19 @@
 #include <Line.h>
 
-Line Ls;
+Line LineSensor;
 
 void setup() {
   Serial.begin(115200);
   Serial1.begin(2000000);
-
 }
 
 void loop() {
 
-  Ls.update();
+  LineSensor.update();
   Serial.print("  avoidAngle: ");
-  Serial.print(Ls.getAvoidAngle());
+  Serial.print(LineSensor.getAvoidAngle());
 
-  Serial1.write(Ls.getAvoidAngle() / 2);
+  Serial1.write(LineSensor.getAvoidAngle() / 2);
 }
 
 
