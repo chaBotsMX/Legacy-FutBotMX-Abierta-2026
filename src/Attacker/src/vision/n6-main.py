@@ -10,8 +10,8 @@ goalTresholds = [
     (0, 0, 0, 0, 0, 0),
 ]
 
-START_BYTE_1 = 0xAA
-START_BYTE_2 = 0x55
+START_BYTE_HIGH = 0xAA
+START_BYTE_LOW = 0x55
 
 uart = UART(1, 115200)
 
@@ -58,8 +58,8 @@ while True:
         goalY = 2000
         goalColor = 0
 
-    packet[0] = START_BYTE_1
-    packet[1] = START_BYTE_2
+    packet[0] = START_BYTE_HIGH
+    packet[1] = START_BYTE_LOW
 
     packet[2] = (ballX >> 8) & 0xFF
     packet[3] = ballX & 0xFF
