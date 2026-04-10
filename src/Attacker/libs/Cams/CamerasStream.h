@@ -1,27 +1,28 @@
 /**
- * @file Cams.h
+ * @file CamerasStream.h
  * 
  * @author Roy Ivan Barron Martinez / chaBotsMX
  * @date 07/04/26
  */
 
-#ifndef Cams_H
-#define Cams_H
+#ifndef CAMERAS_STREAM_H
+#define CAMERAS_STREAM_H
 
+#include "CameraStreamState.h"
 #include <Arduino.h>
 
 #define START_BYTE_HIGH (uint8_t) 0xAA
 #define START_BYTE_LOW (uint8_t) 0x55
 
+#define BUFFER_SIZE 4
 #define PACKET_SIZE 12
-
 #define BALL_OUT_OF_RANGE 500
 
 uint8_t packet[PACKET_SIZE];
 
-class Cams {
+class CamerasStream {
   public:
-    Cams(HardwareSerial &port_);
+    Cams(HardwareSerial &port) : port(port) {}
 
     void begin(unsigned long baud = 115200);
 
@@ -40,6 +41,11 @@ class Cams {
     uint8_t unitVChecksum = 0;
     uint8_t openMVState = 0;
     uint8_t openMVIndex = 0;
+
+    CameraStreamState *unitVStreamState = new WaitForStartByteState(*this);
+    CameraStreamState *openMVStreamState = new WaitForStartByteState(*this);
+
+    void changeState(CameraStreamState *cameraStreamState);
 };
 
 #endif
