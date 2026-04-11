@@ -6,29 +6,31 @@
 
 class OpenMVGetPayloadState : public CameraStreamState {
   public:
-    OpenMVGetPayloadState(CamerasStream &camerasStream) : CameraStreamState(camerasStream) {}
+    OpenMVGetPayloadState(CameraStream &cameraStream) : CameraStreamState(cameraStream) {}
 
     bool execute(uint8_t portData) override {
-      camerasStream.packet[camerasStream.openMVIndex++] = portData;
+      cameraStream.buffer[cameraStream.index++] = portData;
 
-      if (camerasStream.openMVIndex < PACKET_SIZE) return false;
+      if (cameraStream.index < BUFFER_SIZE) return false;
 
       uint8_t checksum = 0;
       for (uint8_t i = 2; i <= 10; i++) {
-        checksum ^= camerasStream.packet[i];
+        checksum ^= cameraStream.buffer[i];
       }
 
-      camerasStream.changeOpenMVStreamState(std::make_unique<OpenMVWaitForStartByteState>(camerasStream));
+      if (checksum != cameraStream.buffer[11]) {
+        cameraStream.changeState(std::make_unique<OpenMVWaitForStartByteState>(cameraStream));
+        return false;
+      }
 
-      if (checksum != camerasStream.packet[11]) return false;
+      cameraStream.ballX = ((uint16_t)cameraStream.buffer[2] << 8) | cameraStream.buffer[3];
+      cameraStream.ballY = ((uint16_t)cameraStream.buffer[4] << 8) | cameraStream.buffer[5];
 
-      camerasStream.x = ((uint16_t)camerasStream.packet[2] << 8) | camerasStream.packet[3];
-      camerasStream.y = ((uint16_t)camerasStream.packet[4] << 8) | camerasStream.packet[5];
+      cameraStream.goalX = ((uint16_t)cameraStream.buffer[6] << 8) | cameraStream.buffer[7];
+      cameraStream.goalY = ((uint16_t)cameraStream.buffer[8] << 8) | cameraStream.buffer[9];
+      cameraStream.goalColor = cameraStream.buffer[10];
 
-      camerasStream.goalX = ((uint16_t)camerasStream.packet[6] << 8) | camerasStream.packet[7];
-      camerasStream.goalY = ((uint16_t)camerasStream.packet[8] << 8) | camerasStream.packet[9];
-      camerasStream.goalColor = camerasStream.packet[10];
-
+      cameraStream.changeState(std::make_unique<OpenMVWaitForStartByteState>(cameraStream));
       return true;
     }
 };

@@ -1,21 +1,21 @@
 #ifndef OPEN_MV_WAIT_FOR_SECOND_START_BYTE_STATE_H
 #define OPEN_MV_WAIT_FOR_SECOND_START_BYTE_STATE_H
 
-#include "CamerasStream.h"
+#include "CameraStream.h"
 #include <memory>
 
 class OpenMVWaitForSecondByteState : public CameraStreamState {
   public:
-    OpenMVWaitForSecondByteState(CamerasStream &camerasStream) : CameraStreamState(camerasStream) {}
+    OpenMVWaitForSecondByteState(CameraStream &cameraStream) : CameraStreamState(cameraStream) {}
 
     bool execute(uint8_t portData) override {
         if (portData == START_BYTE_LOW) {
-          camerasStream.packet[1] = portData;
-          camerasStream.openMVIndex = 2;
-          camerasStream.changeOpenMVStreamState(std::make_unique<OpenMVGetPayloadState>(camerasStream));
+          cameraStream.buffer[1] = portData;
+          cameraStream.index = 2;
+          cameraStream.changeOpenMVStreamState(std::make_unique<OpenMVGetPayloadState>(cameraStream));
         } 
-        else if (portData == START_BYTE_HIGH) camerasStream.packet[0] = portData;
-        else camerasStream.changeOpenMVStreamState(std::make_unique<OpenMVWaitForStartByteState>(camerasStream));
+        else if (portData == START_BYTE_HIGH) cameraStream.buffer[0] = portData;
+        else cameraStream.changeOpenMVStreamState(std::make_unique<OpenMVWaitForStartByteState>(cameraStream));
         
         return false;
     }

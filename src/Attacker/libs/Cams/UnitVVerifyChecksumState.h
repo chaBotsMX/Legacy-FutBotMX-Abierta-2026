@@ -6,15 +6,15 @@
 
 class UnitVVerifyChecksumState : public CameraStreamState {
   public:
-    UnitVVerifyChecksumState(CamerasStream &camerasStream) : CameraStreamState(camerasStream) {}
+    UnitVVerifyChecksumState(CamerasStream &cameraStream) : CameraStreamState(cameraStream) {}
 
     bool execute(uint8_t &portData) override {
-      if (portData == camerasStream.unitVChecksum) {
-          camerasStream.changeState(std::make_unique<UnitVWaitForSecondStartByteState>(camerasStream));
+      if (portData == cameraStream.checksum) {
+          cameraStream.changeState(std::make_unique<UnitVWaitForSecondStartByteState>(cameraStream));
           return false;
       }
 
-      camerasStream.changeState(std::make_unique<UnitVWaitForStartByteState>(camerasStream));
+      cameraStream.changeState(std::make_unique<UnitVWaitForStartByteState>(cameraStream));
       return false;
     }
 };

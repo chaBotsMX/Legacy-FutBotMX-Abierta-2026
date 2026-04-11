@@ -9,14 +9,14 @@
 #ifndef CAMERA_STREAM_STATE_H
 #define CAMERA_STREAM_STATE_H
 
-#include "CamerasStream.h"
+#include "CameraStream.h"
 
 class CameraStreamState {
   public:
-    CameraStreamState(CamerasStream &camerasStream) : camerasStream(camerasStream) {}
+    CameraStreamState(CameraStream &cameraStream) : cameraStream(cameraStream) {}
 
   protected:
-    CamerasStream &camerasStream;
+    CameraStream &cameraStream;
     virtual ~CameraStreamState() {}
 
     virtual bool execute(uint8_t &portData) = 0;

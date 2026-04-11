@@ -6,13 +6,13 @@
 
 class UnitVGetPayloadState : public CameraStreamState {
   public:
-    UnitVGetPayloadState(CamerasStream &camerasStream) : CameraStreamState(camerasStream) {}
+    UnitVGetPayloadState(CameraStream &cameraStream) : CameraStreamState(cameraStream) {}
 
     bool execute(uint8_t &portData) override {
-      camerasStream.unitVBuffer[camerasStream.unitVIndex++] = portData;
-      camerasStream.unitVChecksum = (camerasStream.unitVChecksum + portData) & 0xFF;
-      if (camerasStream.unitVIndex < 4) return false;
-      camerasStream.changeState(std::make_unique<UnitVVerifyChecksumState>(camerasStream));
+      cameraStream.buffer[cameraStream.index++] = portData;
+      cameraStream.checksum = (cameraStream.checksum + portData) & 0xFF;
+      if (cameraStream.index < 4) return false;
+      cameraStream.changeState(std::make_unique<UnitVVerifyChecksumState>(cameraStream));
       return false;
     }
 };

@@ -6,17 +6,17 @@
 
 class UnitVWaitForSecondStartByteState : public CameraStreamState {
   public:
-    UnitVWaitForSecondStartByteState(CamerasStream &camerasStream) : CameraStreamState(camerasStream) {}
+    UnitVWaitForSecondStartByteState(CameraStream &cameraStream) : CameraStreamState(cameraStream) {}
 
     bool execute(uint8_t &portData) override {
       if (portData != START_BYTE_HIGH) {
-          camerasStream.changeState(std::make_unique<UnitVWaitForStartByteState>(camerasStream));
+          cameraStream.changeState(std::make_unique<UnitVWaitForStartByteState>(cameraStream));
           return false;
       }
 
-      camerasStream.x = (int16_t)(unitVBuffer[0] | (unitVBuffer[1] << 8));
-      camerasStream.y = (int16_t)(unitVBuffer[2] | (unitVBuffer[3] << 8));
-      camerasStream.changeState(std::make_unique<UnitVWaitForStartByteState>(camerasStream));
+      cameraStream.ballX = (int16_t)(buffer[0] | (buffer[1] << 8));
+      cameraStream.ballY = (int16_t)(buffer[2] | (buffer[3] << 8));
+      cameraStream.changeState(std::make_unique<UnitVWaitForStartByteState>(cameraStream));
       return true;
     }
 };
