@@ -10,6 +10,7 @@
 
 #include "CameraStreamState.h"
 #include <Arduino.h>
+#include <memory>
 
 #define START_BYTE_HIGH (uint8_t) 0xAA
 #define START_BYTE_LOW (uint8_t) 0x55
@@ -42,10 +43,11 @@ class CamerasStream {
     uint8_t openMVState = 0;
     uint8_t openMVIndex = 0;
 
-    CameraStreamState *unitVStreamState = new WaitForStartByteState(*this);
-    CameraStreamState *openMVStreamState = new WaitForStartByteState(*this);
+    std::unique_ptr<CameraStreamState> unitVStreamState = std::make_unique<UnitVWaitForStartByteState>(*this);
+    std::unique_ptr<CameraStreamState> openMVStreamState = std::make_unique<OpenMVWaitForStartByteState>(*this);
 
-    void changeState(CameraStreamState *cameraStreamState);
+    void changeUnitVStreamState(std::unique_ptr<CameraStreamState> unitVStreamState);
+    void changeOpenMVStreamState(std::unique_ptr<CameraStreamState> openMVStreamState);
 };
 
 #endif
