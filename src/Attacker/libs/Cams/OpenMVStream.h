@@ -1,3 +1,11 @@
+/**
+ * @file CamerasStream.cpp
+ * @brief Library for handling camera communication.
+ * 
+ * @author Roy Ivan Barron Martinez / chaBotsMX
+ * @date 06/04/26
+**/
+
 #ifndef OPENMV_STREAM_H
 #define OPENMV_STREAM_H
 
