@@ -2,7 +2,6 @@
 #define UNIT_V_WAIT_FOR_START_BYTE_STATE_H
 
 #include "CameraStreamState.h"
-#include <memory>
 
 class UnitVWaitForStartByteState : public CameraStreamState {
   public:

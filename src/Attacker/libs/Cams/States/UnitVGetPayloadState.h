@@ -2,7 +2,6 @@
 #define UNIT_V_GET_PAYLOAD_STATE_H
 
 #include "CameraStreamState.h"
-#include <memory>
 
 class UnitVGetPayloadState : public CameraStreamState {
   public:

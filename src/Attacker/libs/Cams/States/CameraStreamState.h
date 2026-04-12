@@ -10,6 +10,7 @@
 #define CAMERA_STREAM_STATE_H
 
 #include "CameraStream.h"
+#include <memory>
 
 class CameraStreamState {
   public:
