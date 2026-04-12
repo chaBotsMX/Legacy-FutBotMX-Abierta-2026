@@ -2,7 +2,6 @@
 #define OPEN_MV_WAIT_FOR_START_BYTE_STATE_H
 
 #include "CameraStream.h"
-#include <memory>
 
 class OpenMVWaitForStartByteState : public CameraStreamState {
   public:

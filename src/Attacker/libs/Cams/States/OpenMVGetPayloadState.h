@@ -2,7 +2,6 @@
 #define OPEN_MV_GET_PAYLOAD_STATE_H
 
 #include "CameraStreamState.h"
-#include <memory>
 
 class OpenMVGetPayloadState : public CameraStreamState {
   public:
