@@ -54,6 +54,7 @@ int Line::lineSwitch(int sector, int lastSector) {
         angle = lastSector * 30;
         }
     }
+    //TODO add last sector
 
     angle = (angle % 360 + 360) % 360;
     return angle;
@@ -74,7 +75,7 @@ int Line::adjustLineAngle(int angle) {
     }
 }
 
-void Line::update() {
+int Line::update() {
   float sumCos = 0;
   float sumSin = 0;
   int numRead = 0;
@@ -99,7 +100,6 @@ void Line::update() {
     fixedLineAngle = 500;
     avoidAngle = 500;
     firstDetected = false;
-
     digitalWrite(13, LOW);
   } else {
     angle = atan2(sumSin, sumCos) * 180.0 / 3.14159265;
