@@ -1,5 +1,5 @@
-#include "libs/camera/OpenMVStream.h"
-#include "libs/camera/UnitVStream.h"
+#include "camera/OpenMVStream.h"
+#include "camera/UnitVStream.h"
 
 #define BALL_OUT_OF_RANGE 500
 #define ITERATION_DELAY 1000
@@ -13,8 +13,8 @@ UnitVStream LeftCam(Serial3);
 UnitVStream RightCam(Serial1);
 
 int ballAng = 0;
-int ballFrontX,ballFrontY,goalFrontX,goalFrontY,goalFrontColor;
-int ballBackX, ballBackY, goalBackX,goalBackY,goalBackColor;
+int ballFrontX, ballFrontY, goalFrontX, goalFrontY, goalFrontColor;
+int ballBackX, ballBackY, goalBackX, goalBackY, goalBackColor;
 int ballRigthX, ballRigthY;
 int ballLeftX, ballLeftY;
 
@@ -32,17 +32,18 @@ void setup() {
 }
 
 void loop() {
-  if(FrontCam.update()) {
+  if (FrontCam.update()) {
     FrontCam.getBallX(ballFrontX);
     ballFrontX -= CAMERA_RESOLUTION_WIDTH / 2;
   }
-  if(BackCam.updatePacketOpenMV(ballBackX, ballBackY, goalBackX, goalBackY, goalBackColor)){
+  if (BackCam.updatePacketOpenMV(ballBackX, ballBackY, goalBackX, goalBackY,
+                                 goalBackColor)) {
     Serial.print(" camBack Working");
   }
-  if(LeftCam.updatePacketUnitV(ballLeftX,ballLeftY)){
+  if (LeftCam.updatePacketUnitV(ballLeftX, ballLeftY)) {
     Serial.print(" camLeft Working");
   }
-  if(RightCam.updatePacketUnitV(ballRigthX,ballRigthY)){
+  if (RightCam.updatePacketUnitV(ballRigthX, ballRigthY)) {
     Serial.println(" camRigth Working");
   }
   Serial5.write(ballAng / 2);
