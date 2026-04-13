@@ -8,12 +8,12 @@ OpenMVWaitForSecondStartByteState::OpenMVWaitForSecondStartByteState(
     : CameraStreamState(cameraStream) {}
 
 bool OpenMVWaitForSecondStartByteState::execute(uint8_t &portData) {
-  if (portData == START_BYTE_LOW) {
+  if (portData == cameraStream.START_BYTE_LOW) {
     cameraStream.buffer[1] = portData;
     cameraStream.index = 2;
     cameraStream.changeState(
         std::make_unique<OpenMVGetPayloadState>(cameraStream));
-  } else if (portData == START_BYTE_HIGH)
+  } else if (portData == cameraStream.START_BYTE_HIGH)
     cameraStream.buffer[0] = portData;
   else
     cameraStream.changeState(

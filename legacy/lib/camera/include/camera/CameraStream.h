@@ -13,9 +13,6 @@
 #include <memory>
 #include <vector>
 
-#define START_BYTE_HIGH (uint8_t)0xAA
-#define START_BYTE_LOW (uint8_t)0x55
-
 #define BALL_OUT_OF_RANGE 500
 
 class CameraStreamState;
@@ -28,6 +25,9 @@ public:
   void begin(unsigned long baud = 115200) { port.begin(baud); }
 
   virtual bool update() = 0;
+
+  uint8_t START_BYTE_HIGH = 0xAA;
+  uint8_t START_BYTE_LOW = 0x55;
 
   int ballX = BALL_OUT_OF_RANGE;
   int ballY = BALL_OUT_OF_RANGE;

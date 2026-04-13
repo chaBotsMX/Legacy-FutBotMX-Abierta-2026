@@ -7,7 +7,7 @@ OpenMVWaitForStartByteState::OpenMVWaitForStartByteState(
     : CameraStreamState(cameraStream) {}
 
 bool OpenMVWaitForStartByteState::execute(uint8_t &portData) {
-  if (portData != START_BYTE_HIGH)
+  if (portData != cameraStream.START_BYTE_HIGH)
     return false;
   cameraStream.buffer[0] = portData;
   cameraStream.changeState(

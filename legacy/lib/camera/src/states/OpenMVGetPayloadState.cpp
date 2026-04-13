@@ -1,5 +1,5 @@
 #include "camera/states/OpenMVGetPayloadState.h"
-#include "camera/OpenMVStream.h"
+#include "camera/CameraStream.h"
 #include "camera/states/OpenMVWaitForStartByteState.h"
 
 OpenMVGetPayloadState::OpenMVGetPayloadState(CameraStream &cameraStream)
@@ -8,7 +8,7 @@ OpenMVGetPayloadState::OpenMVGetPayloadState(CameraStream &cameraStream)
 bool OpenMVGetPayloadState::execute(uint8_t &portData) {
   cameraStream.buffer[cameraStream.index++] = portData;
 
-  if (cameraStream.index < OPENMV_BUFFER_SIZE)
+  if (cameraStream.index < cameraStream.buffer.size())
     return false;
 
   uint8_t checksum = 0;

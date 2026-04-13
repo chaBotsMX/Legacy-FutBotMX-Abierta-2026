@@ -10,25 +10,12 @@
 #define UNIT_V_VERIFY_CHECKSUM_STATE_H
 
 #include "camera/states/CameraStreamState.h"
-#include "camera/states/UnitVWaitForSecondStartByteState.h"
-#include "camera/states/UnitVWaitForStartByteState.h"
 
 class UnitVVerifyChecksumState : public CameraStreamState {
 public:
-  UnitVVerifyChecksumState(CamerasStream &cameraStream)
-      : CameraStreamState(cameraStream) {}
+  UnitVVerifyChecksumState(CameraStream &cameraStream);
 
-  bool execute(uint8_t &portData) override {
-    if (portData == cameraStream.checksum) {
-      cameraStream.changeState(
-          std::make_unique<UnitVWaitForSecondStartByteState>(cameraStream));
-      return false;
-    }
-
-    cameraStream.changeState(
-        std::make_unique<UnitVWaitForStartByteState>(cameraStream));
-    return false;
-  }
+  bool execute(uint8_t &portData) override;
 };
 
 #endif

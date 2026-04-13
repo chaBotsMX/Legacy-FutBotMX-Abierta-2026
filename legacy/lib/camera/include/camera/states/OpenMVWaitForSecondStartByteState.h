@@ -9,7 +9,9 @@
 #ifndef OPEN_MV_WAIT_FOR_SECOND_START_BYTE_STATE_H
 #define OPEN_MV_WAIT_FOR_SECOND_START_BYTE_STATE_H
 
-#include "CameraStreamState.h"
+#include "camera/states/CameraStreamState.h"
+#include "camera/states/OpenMVGetPayloadState.h"
+#include "camera/states/OpenMVWaitForStartByteState.h"
 
 class OpenMVWaitForSecondStartByteState : public CameraStreamState {
 public:

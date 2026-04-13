@@ -13,18 +13,9 @@
 
 class UnitVWaitForStartByteState : public CameraStreamState {
 public:
-  UnitVWaitForStartByteState(CameraStream &cameraStream)
-      : CameraStreamState(cameraStream) {}
+  UnitVWaitForStartByteState(CameraStream &cameraStream);
 
-  bool execute(uint8_t &portData) override {
-    if (portData != START_BYTE_HIGH)
-      return false;
-    cameraStream.index = 0;
-    cameraStream.checksum = 0;
-    cameraStream.changeState(
-        std::make_unique<UnitVGetPayloadState>(cameraStream));
-    return false;
-  }
+  bool execute(uint8_t &portData) override;
 };
 
 #endif
