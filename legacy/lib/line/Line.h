@@ -10,14 +10,15 @@
 
 #include <Arduino.h>
 #include <cmath>
+#include <Adafruit_NeoPixel.h>
 
 #define STARTUP_DELAY 1000
 
-#define NUM_SENSORS 15
+#define NUM_SENSORS 32
 #define BUFFER_SIZE 60
 #define NUM_SECTORS 12
 
-#define LINE_SENSOR_ANGLE_STEP 22.5
+#define LINE_SENSOR_ANGLE_STEP 11.25
 #define BALL_OUT_OF_RANGE 500
 
 #define LINE_THRESHOLD 300
@@ -28,14 +29,14 @@
 #define SECTOR_ANGLE_STEP 30
 #define SECTOR_OFFSET 15
 
-#define LED_PIN 13
+#define LED_PIN 10
 
 #define PI acos((long double)-1)
 
 class Line {
 
   public:
-    Line(int threshold);
+    Line();
 
     void calculateDepth();
     void calculateSide();
@@ -45,13 +46,18 @@ class Line {
     int getAvoidAngle() { return avoidAngle; }
 
     void update();
+    void generateVoltages();
 
   private:
+    Adafruit_NeoPixel pixels;
     // Pines de sensores ordenados en sentido de las manecillas del reloj
-    int analogs[NUM_SENSORS] = {17,18,19,20,24,25,26,27,41,40,39,38,14,15,16};
+    int analogs[NUM_SENSORS] = {36, 29, 30, 31, 32, 27, 26, 25, 24, 9, 8, 7, 6, 0, 1, 2, 3, 20, 21, 22, 23, 19, 18, 17, 16, 40, 39, 38, 37, 33, 34, 35};
 
-    // Senos y cosenos para angulos de 0 a 360 cada 22.5 grados
-    // 0, 22.5, 45, 67.5, 90...
+    // Pines usados para generar voltajes de referencia en el filtro RC
+    const int vref[4] = {4, 12, 13, 28};
+
+    // Senos y cosenos para angulos de 0 a 360 cada 11.25 grados
+    // 0, 11.25, 22.5, 33.75, 45...
     float cosenos[NUM_SENSORS];
     float senos[NUM_SENSORS];
 
@@ -62,7 +68,7 @@ class Line {
     int fixedLineAngle = BALL_OUT_OF_RANGE;
     int avoidAngle = BALL_OUT_OF_RANGE;
     float angle = BALL_OUT_OF_RANGE;
-    int threshold;
+    int threshold = LINE_THRESHOLD;
 
     void calculateSinAndCos();
     int filterAngle(int angle);

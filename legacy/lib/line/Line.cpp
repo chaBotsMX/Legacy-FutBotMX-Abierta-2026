@@ -8,14 +8,29 @@
 
 #include "Line.h"
 
-Line::Line(int threshold = 300) {
+Line::Line() : pixels(NUM_SENSORS, LED_PIN, NEO_RGB + NEO_KHZ800) {
   pinMode(LED_PIN, OUTPUT);
-  analogReadResolution(12);
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    pinMode(analogs[i], INPUT);
+  }
+  analogWrite(vref[0], 220);
+  analogWrite(vref[1], 220);
+  analogWrite(vref[2], 220);
+  analogWrite(vref[3], 240);
 
   delay(STARTUP_DELAY);
 
-  this->threshold = threshold;
   calculateSinAndCos();
+  
+  pixels.begin();
+  pixels.clear();
+
+  for(int i = 0; i < NUM_SENSORS; i++){
+    unsigned long start = millis();
+    while(millis() - start < 20){}
+    pixels.setPixelColor(i, pixels.Color(80, 80, 80));
+    pixels.show();
+  }
 }
 
 int Line::getLineSector(float lineAngle) {
@@ -77,12 +92,10 @@ void Line::update() {
   int numRead = 0;
 
   for (int i = 0; i < NUM_SENSORS; i++) {
-    int val = analogRead(analogs[i]);
-    val = (val > LINE_THRESHOLD) ? 1 : 0;
-    detectedSensors[i] = val;
-
-//    Serial.print(val);
-//    Serial.print(" ");
+    int val = digitalRead(analogs[i]);
+    val = (val == HIGH) ? 1 : 0;
+    Serial.print(val);
+    Serial.print(" ");
 
     if (!val) continue;
 
@@ -90,7 +103,7 @@ void Line::update() {
     sumCos += cosenos[i];
     sumSin += senos[i];
   }
-//  Serial.println();
+  Serial.println();
 
   if (!numRead) {
     angle = BALL_OUT_OF_RANGE;

@@ -24,13 +24,13 @@ void Omni::move(int angle, int power,int rotation){
     float B = -power * sin((MOTOR_ANGLE_OFFSET - angle) * PI / 180.0);
     float C = power * sin((MOTOR_ANGLE_OFFSET - angle) * PI / 180.0);
     float D = -power * cos((MOTOR_ANGLE_OFFSET - angle) * PI / 180.0);
-
+/*
     Serial.print(A); Serial.print('\t');
     Serial.print(B); Serial.print('\t');
     Serial.print(C); Serial.print('\t');
     Serial.print(D); Serial.print('\t');
     Serial.println("");
-
+*/
     float maxVal = max(max(abs(A), abs(B)), max(abs(C), abs(D))); //Serial.print(maxVal); Serial.print('\t');
     if (maxVal > 0) {
       float scale = float(power) / maxVal;
