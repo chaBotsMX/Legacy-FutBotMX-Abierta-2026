@@ -29,15 +29,19 @@ threshold = (42, 100, 16, 127, 3, 127)
 
 START_BYTE = 0xAA
 END_BYTE = 0x55
-
 while True:
     best_blob = None
     img = sensor.snapshot()
-    blobs = img.find_blobs([threshold], pixels_threshold=10, area_threshold=50, merge=True)
+
+    blobs = img.find_blobs(
+        [threshold],
+        pixels_threshold=10,
+        area_threshold=50,
+        merge=True
+    )
 
     if blobs:
-        blob = max(blobs, key=lambda b: b.pixels())
-        best_blob = blob
+        best_blob = max(blobs, key=lambda b: b.pixels())
 
     if best_blob:
         x = best_blob.cx() - 160
@@ -52,18 +56,10 @@ while True:
         x = 500
         y = 500
 
-    # Empaquetar x,y en 4 bytes
+    # 4 bytes: x int16 little-endian, y int16 little-endian
     payload = ustruct.pack("<hh", x, y)
 
-    # Checksum simple: suma de payload mod 256
-    checksum = 0
-    for b in payload:
-        checksum = (checksum + b) & 0xFF
 
-    # Trama completa:
-    # [START][x low][x high][y low][y high][CHECKSUM][END]
-    packet = bytes([START_BYTE]) + payload + bytes([checksum, END_BYTE])
+    packet = bytes([START_BYTE]) + payload + bytes([END_BYTE])
 
     uart.write(packet)
-
-

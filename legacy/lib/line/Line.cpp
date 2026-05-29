@@ -13,10 +13,10 @@ Line::Line() : pixels(NUM_SENSORS, LED_PIN, NEO_RGB + NEO_KHZ800) {
   for (int i = 0; i < NUM_SENSORS; i++) {
     pinMode(analogs[i], INPUT);
   }
-  analogWrite(vref[0], 220);
-  analogWrite(vref[1], 220);
-  analogWrite(vref[2], 220);
-  analogWrite(vref[3], 240);
+  analogWrite(vref[0], 200);
+  analogWrite(vref[1], 200);
+  analogWrite(vref[2], 200);
+  analogWrite(vref[3], 200);
 
   delay(STARTUP_DELAY);
 

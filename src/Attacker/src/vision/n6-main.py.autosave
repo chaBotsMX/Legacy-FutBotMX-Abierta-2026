@@ -18,10 +18,11 @@ uart = UART(1, 115200)
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
+sensor.set_auto_blc(False,regs=(128 ,134 ,134 ,135 ,124 ,120 ,130 , 124 ))
 sensor.set_auto_gain(False, gain_db=10)
 sensor.set_auto_exposure(False, exposure_us=6576)
 sensor.set_auto_whitebal(False, rgb_gain_db=(40.0, 3.0, 60.0))
-sensor.set_auto_blc(False,regs=(128,  134, 134, 135, 124, 120, 130, 124))
+
 sensor.set_framerate(120)
 sensor.skip_frames(time=2000)
 

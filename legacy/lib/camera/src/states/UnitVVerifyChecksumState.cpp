@@ -1,16 +1,26 @@
 #include "camera/states/UnitVVerifyChecksumState.h"
 #include "camera/CameraStream.h"
-#include "camera/states/UnitVGetPayloadState.h"
+#include "camera/states/UnitVWaitForStartByteState.h"
 
 UnitVVerifyChecksumState::UnitVVerifyChecksumState(CameraStream &cameraStream)
     : CameraStreamState(cameraStream) {}
 
 bool UnitVVerifyChecksumState::execute(uint8_t &portData) {
-  if (portData != cameraStream.START_BYTE_HIGH)
+
+  if (portData != cameraStream.START_BYTE_LOW) {
+    cameraStream.changeState(
+        std::make_unique<UnitVWaitForStartByteState>(cameraStream));
     return false;
-  cameraStream.index = 0;
-  cameraStream.checksum = 0;
+  }
+
+  cameraStream.ballX =
+      (int16_t)(cameraStream.buffer[0] | (cameraStream.buffer[1] << 8));
+
+  cameraStream.ballY =
+      (int16_t)(cameraStream.buffer[2] | (cameraStream.buffer[3] << 8));
+
   cameraStream.changeState(
-      std::make_unique<UnitVGetPayloadState>(cameraStream));
-  return false;
-}
+      std::make_unique<UnitVWaitForStartByteState>(cameraStream));
+
+  return true;
+} 
