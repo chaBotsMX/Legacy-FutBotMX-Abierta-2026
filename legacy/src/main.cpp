@@ -25,17 +25,6 @@ int smoothGoalAng = 500;
 unsigned long lastGoalStep = 0;
 const int GOAL_STEP_MS = 25 ; 
 
-int wrap180(int angle) {
-  while (angle > 180) angle -= 360;
-  while (angle < -180) angle += 360;
-  return angle;
-}
-
-int wrap360(int angle) {
-  while (angle < 0) angle += 360;
-  while (angle >= 360) angle -= 360;
-  return angle;
-}
 
 bool receiveInfoFromCameraTeensy(HardwareSerial &port) {
   static uint8_t state = 0;

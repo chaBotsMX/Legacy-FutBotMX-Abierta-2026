@@ -1,6 +1,7 @@
 #include "camera/OpenMVStream.h"
 #include "camera/UnitVStream.h"
-
+#include "uitls.h" 
+#include "ballProccesing.h"
 #define BALL_OUT_OF_RANGE 500
 #define CAMERA_RESOLUTION_WIDTH 320
 #define CAMERA_RESOLUTION_HEIGHT 240
@@ -26,52 +27,25 @@ int ballBackX, ballBackY, goalBackX, goalBackY, goalBackColor;
 int ballRigthX, ballRigthY;
 int ballLeftX, ballLeftY;
 
-bool haveBall() {
-  if(ballFrontX != BALL_OUT_OF_RANGE) {
-    if(ballFrontX > 140 && ballFrontX < 200 && ballFrontY < 12){
-      return true;
-    }
-    else{
-      return false;
-    }
-  }
-  else{
-    return false;
-  }
-}
-int wrap360(int angle) {
-  if (angle < 0) {
-    return angle + 360;
-  }
-  else if (angle >= 360) {
-    return angle - 360;
-  }
-  else {
-    return angle;
-  }
-}
+
 void kick(){
   digitalWrite(KICK_PIN, HIGH);
   delay(10);
   digitalWrite(KICK_PIN, LOW);
 }
-int getBallAngle() {
+int calcRawBallAngle() {
   int resultAng = 500;
   if (ballFrontX != BALL_OUT_OF_RANGE) {
-    resultAng =atan2(ballFrontY + 40,ballFrontX - (CAMERA_RESOLUTION_WIDTH / 2)) * 180 / PI;
-    return wrap360(resultAng - 90);
+    return getBallAngle(ballFrontX, ballFrontY, 0); 
   }
  /* else if(ballBackX != BALL_OUT_OF_RANGE){
-    resultAng = atan2(ballBackY + 40,ballBackX - (CAMERA_RESOLUTION_WIDTH / 2)) * 180 / PI;
-    return wrap360(resultAng + 90);
+    return getBallAngle(ballBackX, ballBackY, 1);
   }*/
   else if(ballLeftX != BALL_OUT_OF_RANGE){
-    resultAng = atan2(ballLeftY,ballLeftX) * 180 / PI;
-    return wrap360(resultAng + 180);
+    return getBallAngle(ballLeftX, ballLeftY, 2);
   }
   else if(ballRigthX != BALL_OUT_OF_RANGE){
-    resultAng = atan2(ballRigthY,ballRigthX) * 180 / PI;
-    return wrap360(resultAng );
+    return getBallAngle(ballRigthX, ballRigthY, 3);
   }
   else{
     return resultAng;
@@ -79,32 +53,13 @@ int getBallAngle() {
 
 }
 
-int getGoalAngle() {
-  int resultAng = 500;
-  if(goalFrontX != BALL_OUT_OF_RANGE || goalBackX != BALL_OUT_OF_RANGE){
 
-  if (goalFrontX != BALL_OUT_OF_RANGE) {
-    resultAng = atan2(goalFrontY - (CAMERA_RESOLUTION_HEIGHT / 2),goalFrontX - (CAMERA_RESOLUTION_WIDTH / 2)) * 180 / PI;
-    return wrap360(resultAng - 90);
-  }
-  else if(goalBackX != BALL_OUT_OF_RANGE){
-    resultAng = atan2(goalBackY - (CAMERA_RESOLUTION_HEIGHT / 2),goalBackX - (CAMERA_RESOLUTION_WIDTH / 2)) * 180 / PI;
-    return wrap360(resultAng + 90);
-  }
-  else{
-    return resultAng;
-  }
-  }
-  else{
-    return 500;
-  }
-}
 
 void sendInfoToMain(){
   Serial5.write(0xAA);
   Serial5.write(ballAng / 2);
-  Serial5.write(haveBall());
-  Serial5.write(getGoalAngle() / 2);
+  Serial5.write(haveBall(ballFrontX, ballFrontY));
+  Serial5.write(getGoalAngle(goalFrontX,goalBackY) / 2);
   Serial5.write(0x55);
 }
 
@@ -193,18 +148,7 @@ void loop() {
   }
  
 
-  ballAng = getBallAngle();
- // Serial.print("Ball Angle: ");
- // Serial.println(ballAng);
-
-  Serial.print("goalX: ");
-  Serial.print(goalFrontX);
-  Serial.print(" goalY: ");
-  Serial.print(goalFrontY);
-  Serial.print("goalAng: ");
-  Serial.println(getGoalAngle());
-  Serial.print("haveBall: ");
-  Serial.println(haveBall());  
+  ballAng = calcRawBallAngle();
   sendInfoToMain();
 }
 
