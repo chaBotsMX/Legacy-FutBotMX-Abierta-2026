@@ -1,3 +1,7 @@
+#ifndef BALLPROCCESING_H
+#define BALLPROCCESING_H
+
+
 #include "utils.h"
 
 #define INVALID_DATA 500
@@ -9,7 +13,7 @@
 #define QVGA_HEIGHT 240
 
 // verifica si la pelota esta en el area del dribbler para saber si la capturo y a si patearla o encender el dribbler 
-bool haveBall(int verifyX, int verifyY) {
+inline bool haveBall(int verifyX, int verifyY) {
   if(verifyX != INVALID_DATA) {
     if(verifyX > DRIBBLER_AREA_X_MIN && verifyX < DRIBBLER_AREA_X_MAX && verifyY < DRIBBLER_AREA_Y_MAX){
       return true;
@@ -23,7 +27,7 @@ bool haveBall(int verifyX, int verifyY) {
   }
 }
 
-int getGoalAngle(int inputX, int inputY) {
+inline int getGoalAngle(int inputX, int inputY) {
   int resultAng = 500;
   if(inputX != INVALID_DATA || inputY != INVALID_DATA){
 
@@ -38,14 +42,19 @@ int getGoalAngle(int inputX, int inputY) {
 }
 
 
-int getBallAngle(int inputX, int inputY, int side ) {
-    switch (side) {
+
+inline int getBallAngle(int inputX, int inputY, int side ) {
+  int resultAng = 500;
+  switch (side) {
+
     case 0: // frente
-        resultAng =atan2(inputY + 40,inputX - (CAMERA_RESOLUTION_WIDTH / 2)) * 180 / PI;
+
+        resultAng =atan2(inputY + 40,inputX - (QVGA_WIDTH / 2)) * 180 / PI;
         return wrap360(resultAng - 90);
   
     case 1: //atras
-        resultAng = atan2(ballBackY + 40,inputX - (CAMERA_RESOLUTION_WIDTH / 2)) * 180 / PI;
+
+        resultAng = atan2(inputY + 40,inputX - (QVGA_WIDTH / 2)) * 180 / PI;
         return wrap360(resultAng + 90);
   
     case 2: // izquierda
@@ -60,12 +69,13 @@ int getBallAngle(int inputX, int inputY, int side ) {
     }
 }
 
-int getBallDistance(int inputX, int inputY,int side) {
-    // calcula la distancia hacia la pelota, debido al formato hay 2 casos, dependiendo de si se hace con una openmv o una unitv
-    switch (side) {
+
+inline int getBallDistance(int inputX, int inputY,int side ) {
+  switch (side) {
     case 0: // frente y atras
-        return sqrt(pow(inputX - (CAMERA_RESOLUTION_WIDTH / 2), 2) + pow(inputY + 40, 2));
+        return sqrt(pow(inputX - (QVGA_WIDTH / 2), 2) + pow(inputY + 40, 2));
     case 1: //derecho e izquierdo
         return sqrt(pow(inputX, 2) + pow(inputY, 2));
-    }
+  }
 }
+#endif
