@@ -77,5 +77,6 @@ inline int getBallDistance(int inputX, int inputY,int side ) {
     case 1: //derecho e izquierdo
         return sqrt(pow(inputX, 2) + pow(inputY, 2));
   }
+  return 500;
 }
 #endif

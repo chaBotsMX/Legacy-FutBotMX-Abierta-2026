@@ -41,7 +41,6 @@ int CameraInstance::whereIsBall() {
   }
 }
 int CameraInstance::calcRawBallAngle() {
-
   if (whereIsBall() != -1) {
     switch (whereIsBall()) {
       case 0:
@@ -54,9 +53,8 @@ int CameraInstance::calcRawBallAngle() {
         return getBallAngle(right.ballX, right.ballY, 3);
     }
   }
-  else {
-    return BALL_OUT_OF_RANGE;
-  }
+  
+  return BALL_OUT_OF_RANGE;
 
 }
 
@@ -73,9 +71,7 @@ int CameraInstance::calcBallDistance() {
         return getBallDistance(right.ballX, right.ballY, 3);
     }
   }
-  else {
-    return BALL_OUT_OF_RANGE;
-  }
+  return BALL_OUT_OF_RANGE;
 }
 
 
@@ -99,10 +95,11 @@ void CameraInstance::sendInfoToMain(){
   Serial5.write(0xAA);
   Serial5.write(calcRawBallAngle() / 2);
   Serial5.write(haveBall(front.ballX, front.ballY));
-  Serial5.write(front.goalX);
-  Serial5.write(front.goalY);
-  Serial5.write(back.goalX);
-  Serial5.write(back.goalY);
+  Serial5.write(calcBallDistance() / 2);
+  Serial5.write(front.goalX /2);
+  Serial5.write(front.goalY /2);
+  Serial5.write(back.goalX /2);
+  Serial5.write(back.goalY /2);
   Serial5.write(0x55);
 }
 

@@ -31,21 +31,21 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "C:/Users/takig/OneDrive/Escritorio/Legacy-FutBotMX-Abierta-2026/legacy/.pio/build/camera_unit/firmware.elf",
-            "projectEnvName": "camera_unit",
+            "executable": "C:/Users/takig/OneDrive/Escritorio/Legacy-FutBotMX-Abierta-2026/legacy/.pio/build/base_unit/firmware.elf",
+            "projectEnvName": "base_unit",
             "toolchainBinDir": "C:/Users/takig/.platformio/packages/toolchain-gccarmnoneeabi-teensy/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
                 "type": "PlatformIO",
-                "task": "Pre-Debug (camera_unit)"
+                "task": "Pre-Debug (base_unit)"
             }
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "C:/Users/takig/OneDrive/Escritorio/Legacy-FutBotMX-Abierta-2026/legacy/.pio/build/camera_unit/firmware.elf",
-            "projectEnvName": "camera_unit",
+            "executable": "C:/Users/takig/OneDrive/Escritorio/Legacy-FutBotMX-Abierta-2026/legacy/.pio/build/base_unit/firmware.elf",
+            "projectEnvName": "base_unit",
             "toolchainBinDir": "C:/Users/takig/.platformio/packages/toolchain-gccarmnoneeabi-teensy/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -53,8 +53,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "C:/Users/takig/OneDrive/Escritorio/Legacy-FutBotMX-Abierta-2026/legacy/.pio/build/camera_unit/firmware.elf",
-            "projectEnvName": "camera_unit",
+            "executable": "C:/Users/takig/OneDrive/Escritorio/Legacy-FutBotMX-Abierta-2026/legacy/.pio/build/base_unit/firmware.elf",
+            "projectEnvName": "base_unit",
             "toolchainBinDir": "C:/Users/takig/.platformio/packages/toolchain-gccarmnoneeabi-teensy/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"
