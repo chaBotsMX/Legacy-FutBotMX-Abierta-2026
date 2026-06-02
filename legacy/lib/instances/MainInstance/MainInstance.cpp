@@ -10,6 +10,16 @@ elapsedMillis haveBallTimer;
 
 MainInstance::MainInstance() {}
 
+float MainInstance::getProportionY(GoalInfo &goal) {
+    if (goal.x == 500 || goal.y == 500 || goal.x == 0) return 500;
+    return float(goal.y) / float(goal.x);
+}
+
+float MainInstance::getProportionX(GoalInfo &goal) {
+    if (goal.x == 500 || goal.y == 500 || goal.y == 0) return 500;
+    return float(goal.x) / float(goal.y);
+}
+
 bool MainInstance::isInLine() {
     return data.lineAng != 500;
 }
@@ -24,6 +34,12 @@ bool MainInstance::isHaveBall() {
 
 bool MainInstance::isSeeingBothGoals() {
     return data.frontGoal.coordinates.angle != 500 && data.backGoal.coordinates.angle != 500;
+}
+bool MainInstance::isSeeingBackGoal() {
+    return data.backGoal.coordinates.angle != 500;
+}
+bool MainInstance::isSeeingFrontGoal() {
+    return data.frontGoal.coordinates.angle != 500;
 }
 int MainInstance::decideStrategy() {
     if (isInLine()) {
@@ -69,7 +85,7 @@ int MainInstance::getBallCatchTrajectory(int ballAngle, int ballDistance) {
 int MainInstance::getBallCatchSpeed(int ballAngle, int ballDistance) {
   if (ballDistance == 500) return 160; 
   if (ballAngle > 330 || ballAngle < 30){
-    return 150 + int(0.05 * float(ballDistance));
+    return 165 + int(0.05 * float(ballDistance));
   }
   return 200;
 }
@@ -80,22 +96,21 @@ void MainInstance::executeStrategy(int strategy) {
             Serial4.write(3);
             break;
         case 2:
-            goToGoal(data);// Lógica para meter gol
+            tryScoring(data);// Lógica para meter gol
             break;
         case 3:
             Serial4.write(3);
             drive.move(getBallCatchTrajectory(data.ballAng, data.ballDistance), getBallCatchSpeed(data.ballAng, data.ballDistance), data.orientationError); // Lógica para ir hacia la pelota
             break;
         case 4:
-            // Lógica para reubicarse usando ambas porterías como referencia
-            break;
         case 5:
-            // Lógica para reubicarse usando portería trasera como referencia
-            break;
         case 6:
-            // Lógica para reubicarse usando portería frontal como referencia
+            Serial4.write(3);
+            // Lógica para estar quieto a la espera de información
+            drive.move(180, 160, data.orientationError);
             break;
         default:
+            Serial4.write(3);
             // Lógica para estar quieto a la espera de información
             drive.move(180, 160, data.orientationError);
             break;
@@ -210,47 +225,98 @@ Vector MainInstance::sumVectors(Vector &v1, Vector &v2) {
 }
 
 
+void MainInstance::turnTowardsGoalSmooth(GoalInfo &goal) {
+  if (goal.coordinates.angle == 500) {
+    smoothGoalAngle(500, 0);
+    return;
+  }
+
+  int smoothedGoalError = smoothGoalAngle(goal.coordinates.angle, 0);
+
+  if (smoothedGoalError == 500) return;
+
+  int rotation = -smoothedGoalError;
+
+  drive.move(500, 0, rotation);
+}
+
+int MainInstance::getErrorTowardsGoal(GoalInfo &goal, int currentHeading) {
+  if (goal.coordinates.angle == 500) return 0; // No hay información válida
+  int error = wrap180(goal.coordinates.angle - currentHeading); // Suponiendo que el drive considera 0° como "hacia adelante"
+  return error;
+}
+
+int MainInstance::smoothGoalAngle(int newAngle, int currentHeading) {
+  static float smoothedAngle = 500;
+  static unsigned long lastTime = 0;
+
+  const float maxSpeedDegPerSec = 15.0; 
+
+  unsigned long now = millis();
+
+  if (lastTime == 0) {
+    lastTime = now;
+  }
+
+  float dt = (now - lastTime) / 1000.0f;
+  lastTime = now;
+
+  if (dt <= 0 || dt > 0.1f) {
+    dt = 0.01f;
+  }
+
+  if (newAngle == 500) {
+    smoothedAngle = 500;
+    return 500;
+  }
+
+  float targetAngle = wrap180(newAngle);
+
+  if (smoothedAngle == 500) {
+    smoothedAngle = 0;
+  }
+
+  float error = wrap180(targetAngle - smoothedAngle);
+  float maxStep = maxSpeedDegPerSec * dt;
+
+  if (error > maxStep) {
+    error = maxStep;
+  }
+  else if (error < -maxStep) {
+    error = -maxStep;
+  }
+
+  smoothedAngle = wrap180(smoothedAngle + error);
+
+  return (int)roundf(smoothedAngle);
+}
+
 void MainInstance::goToGoal(Data &info) {
-  int goalAng = info.frontGoal.coordinates.angle;
+  if (info.frontGoal.coordinates.angle == 500) return; // No hay información válida
+
+  int goalError = getErrorTowardsGoal(info.frontGoal, data.orientationError);
+
+  drive.move(info.frontGoal.coordinates.angle,180, goalError);
+}
+void MainInstance::tryScoring(Data &info) {
   Serial4.write(2);
-  if (goalAng != 500 && goalAng > 30 && goalAng < 330) {
 
-    int heading = wrap360(bno.getRLHeading());
-
-    if (info.smoothGoalAng == 500) {
-      info.smoothGoalAng = heading;
-    }
-
-    if (millis() - info.lastGoalStep >= GOAL_STEP_MS) {
-      info.lastGoalStep = millis();
-
-      int diff = wrap180(goalAng - info.smoothGoalAng);
-
-      if (diff > 0) {
-        info.smoothGoalAng = wrap360(info.smoothGoalAng + 1);
-      } else if (diff < 0) {
-        info.smoothGoalAng = wrap360(info.smoothGoalAng - 1);
-      }
-    }
-
-    int goalError = wrap180(heading - info.smoothGoalAng);
-    int realGoalError = wrap180(heading - goalAng);
-
-    drive.move(0, 160, goalError);
-
-    if (abs(realGoalError) < 10) {
+  if (info.frontGoal.coordinates.angle == 500 || info.frontGoal.proportionX < 0.3) {
+    drive.move(180, 150, info.orientationError); 
+  }
+  else if (info.frontGoal.proportionX >= 0.3) {
+    turnTowardsGoalSmooth(info.frontGoal);
+    int kickError = abs(wrap180(info.frontGoal.coordinates.angle));
+    if (kickError < 10) {
       Serial4.write(1);
     }
-
-  } else {
-    int corr = bno.getRLHeadingAuto(100);
-    drive.move(180, 150, corr);
-
-    info.smoothGoalAng = 500;
   }
+
 }
 bool MainInstance::filterHaveBall(bool haveBall, elapsedMillis &timer) {
-
+  if (data.ballAng == 500) {
+    return false; // Si no vemos la pelota, asumimos que no la tenemos
+  }
   if (haveBall) {
     timer = 0; 
     return true;
@@ -265,6 +331,10 @@ void MainInstance::filterData() {
     data.frontGoal.coordinates.magnitude = getEuclideanDistance(data.frontGoal.x, data.frontGoal.y);
     data.backGoal.coordinates.angle  = getGoalAngle(data.backGoal.x, data.backGoal.y);
     data.backGoal.coordinates.magnitude = getEuclideanDistance(data.backGoal.x, data.backGoal.y);    
+    data.frontGoal.proportionY = getProportionY(data.frontGoal);
+    data.frontGoal.proportionX = getProportionX(data.frontGoal);
+    data.backGoal.proportionY = getProportionY(data.backGoal);
+    data.backGoal.proportionX = getProportionX(data.backGoal);
 }
 void MainInstance::init()
 {  
@@ -318,8 +388,10 @@ int MainInstance::getGoalAngle(int inputX, int inputY) {
 }
 
 void MainInstance::update() 
-{  
+{   
+    digitalWrite(13,HIGH);
     int error = bno.getRLHeadingAuto(100);
+    data.heading = bno.getHeadingAuto(100);
     data.orientationError = error;
     //Leer boton 
     if(digitalRead(0)){
@@ -335,6 +407,14 @@ void MainInstance::update()
     Serial.print(data.frontGoal.coordinates.angle);
     Serial.print(" | Have Ball: ");
     Serial.println(data.haveBall);
+    Serial.print(" | goalX: ");
+    Serial.print(data.frontGoal.x);
+    Serial.print(" | goalY: ");
+    Serial.println(data.frontGoal.y);
+    Serial.print(" | Proportion Y: ");
+    Serial.println(data.frontGoal.proportionY, 2);
+    Serial.print(" | Proportion X: ");
+    Serial.println(data.frontGoal.proportionX, 2);
     if(digitalRead(1)){
     //Serial.println(error);
     executeStrategy(decideStrategy());

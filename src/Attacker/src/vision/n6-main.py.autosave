@@ -3,11 +3,11 @@ import time
 from pyb import UART
 
 thresholds = [
-    (38, 88, 27, 127, 6, 127),
+    (38, 88, 40, 127, 6, 127),
 ]
 
 goalTresholds = [
-   (57, 76, -87, 20, 33, 127),
+   (58, 76, -87, 36, 33, 127),
 ]
 
 START_BYTE_HIGH = 0xAA
@@ -18,13 +18,19 @@ uart = UART(1, 115200)
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
-sensor.set_auto_blc(False,regs=(128 ,134 ,134 ,135 ,124 ,120 ,130 , 124 ))
-sensor.set_auto_gain(False, gain_db=10)
+sensor.set_auto_blc(False, regs=(129, 132, 134, 133, 128, 132, 120, 128))
+sensor.set_auto_gain(False, gain_db=15)
 sensor.set_auto_exposure(False, exposure_us=6576)
-sensor.set_auto_whitebal(False, rgb_gain_db=(40.0, 3.0, 60.0))
+sensor.set_auto_whitebal(False, rgb_gain_db=(6.0, 3.0, 6.0))
 
-sensor.set_framerate(120)
+sensor.set_brightness(1)
+sensor.set_saturation(1)
+sensor.set_contrast(0)
+
+
+sensor.ioctl(sensor.IOCTL_SET_NIGHT_MODE, False)
 sensor.skip_frames(time=2000)
+
 
 clock = time.clock()
 
@@ -242,5 +248,7 @@ while True:
     packet[11] = checksum
 
     uart.write(packet)
+
+    print(sensor.get_rgb_gain_db()) 
 
 

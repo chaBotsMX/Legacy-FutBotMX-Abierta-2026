@@ -9,7 +9,7 @@
 
 #define START_BYTE 0xAA
 #define END_BYTE   0x55
-#define BALL_DEBOUNCE_MS 500
+#define BALL_DEBOUNCE_MS 100
 #define GOAL_STEP_MS 25
 extern BNO bno;
 extern Omni drive;
@@ -25,20 +25,22 @@ struct GoalInfo {
     Vector coordinates = {500, 500};
     int x;
     int y;
-    int proportionY;
+    float proportionY;
+    float proportionX;
 };
 
 
 struct Data{
     int ballAng = 500;
     int ballDistance = 500;
-    GoalInfo frontGoal = {500, 500,500,500};
-    GoalInfo backGoal = {500, 500,500,500};
+    GoalInfo frontGoal;
+    GoalInfo backGoal;
     Vector Cooordinates = {500, 500};
     unsigned long lastGoalStep = 0;
     int smoothGoalAng = 500;
     int lineAng = 500;
     bool haveBall = false;
+    int heading = 500;
     int orientationError = 500;
 };
 
@@ -56,6 +58,13 @@ class MainInstance {
         bool isSeeingBothGoals();
         bool isSeeingBackGoal();
         bool isSeeingFrontGoal();
+        int getErrorTowardsGoal(GoalInfo &goal, int currentHeading);
+        int smoothGoalAngle(int newAngle, int currentHeading);
+        void turnTowardsGoal(GoalInfo &goal);
+        float getProportionY(GoalInfo &goal);
+        float getProportionX(GoalInfo &goal);
+        void tryScoring(Data &info);
+        void turnTowardsGoalSmooth(GoalInfo &goal);
         int getBallCatchTrajectory(int ballAngle, int ballDistance);
         int getBallCatchSpeed(int ballAngle, int ballDistance);
         int decideStrategy();

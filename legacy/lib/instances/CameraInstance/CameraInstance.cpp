@@ -24,16 +24,16 @@ CameraInstance::CameraInstance() {
 
 
 int CameraInstance::whereIsBall() {
-  if(haveBall(front.ballX, front.ballY)){
+  if(front.ballX != BALL_OUT_OF_RANGE && front.ballY != BALL_OUT_OF_RANGE){
     return 0;
   }
   /*else if(haveBall(back.ballX, back.ballY)){
     return 1;
   }*/
-  else if(haveBall(left.ballX, left.ballY)){
+  else if(left.ballX != BALL_OUT_OF_RANGE && left.ballY != BALL_OUT_OF_RANGE){
     return 2;
   }
-  else if(haveBall(right.ballX, right.ballY)){
+  else if(right.ballX != BALL_OUT_OF_RANGE && right.ballY != BALL_OUT_OF_RANGE){
     return 3;
   }
   else{
@@ -123,12 +123,26 @@ void CameraInstance::init() {
 void CameraInstance::update() {
   OutPutHandler();
   updateCameras();
+  Serial.print("ballAngle=");
+  Serial.print(calcRawBallAngle());
+  Serial.print(" distance=");
+  Serial.print(calcBallDistance());
+  Serial.print(" front.goalX=");
+  Serial.print(front.goalX);
+  Serial.print(" front.goalY=");
+  Serial.print(front.goalY);
+  Serial.print(" back.goalX=");
+  Serial.print(back.goalX);
+  Serial.print(" back.goalY=");
+  Serial.println(back.goalY);
+
   sendInfoToMain();
 }
 
 
 void CameraInstance::updateOpemMVCamData(CameraData &camData, OpenMVStream &camStream, elapsedMillis &camTimer){
   if (camStream.update()) {
+    digitalWrite(LED_PIN, HIGH);
     camData.ballX = camStream.ballX;
     camData.ballY = camStream.ballY;
     camData.goalX = camStream.goalX;
@@ -137,6 +151,7 @@ void CameraInstance::updateOpemMVCamData(CameraData &camData, OpenMVStream &camS
     camTimer = 0;
   }
   else if (camTimer > 500) {
+    digitalWrite(LED_PIN, LOW);
     camData.ballX = BALL_OUT_OF_RANGE;
     camData.ballY = BALL_OUT_OF_RANGE;
   }
