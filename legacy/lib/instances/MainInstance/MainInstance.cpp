@@ -5,90 +5,40 @@
 
 BNO bno;
 Omni drive;
-Data data;
 elapsedMillis haveBallTimer;
 
 MainInstance::MainInstance() {}
 
-float MainInstance::getProportionY(GoalInfo &goal) {
-    if (goal.x == 500 || goal.y == 500 || goal.x == 0) return 500;
-    return float(goal.y) / float(goal.x);
+void MainInstance::getReferenceBNO(Data &info){
+  info.setPoint = bno.getHeadingAuto(100);
 }
 
-float MainInstance::getProportionX(GoalInfo &goal) {
-    if (goal.x == 500 || goal.y == 500 || goal.y == 0) return 500;
-    return float(goal.x) / float(goal.y);
+int MainInstance::getOrientationError(Data &info){
+  return wrap180(info.setPoint - info.heading);
 }
 
-bool MainInstance::isInLine() {
-    return data.lineAng != 500;
-}
-
-bool MainInstance::isSeeingBall() {
-    return data.ballAng != 500;
-}
-
-bool MainInstance::isHaveBall() {
-    return data.haveBall;
-}
-
-bool MainInstance::isSeeingBothGoals() {
-    return data.frontGoal.coordinates.angle != 500 && data.backGoal.coordinates.angle != 500;
-}
-bool MainInstance::isSeeingBackGoal() {
-    return data.backGoal.coordinates.angle != 500;
-}
-bool MainInstance::isSeeingFrontGoal() {
-    return data.frontGoal.coordinates.angle != 500;
-}
 int MainInstance::decideStrategy() {
-    if (isInLine()) {
+    if (vision.isInLine(data)) {
         return 1; // Salir de linea
-    } else if (isHaveBall()) {
+    } else if (vision.isHaveBall(data)) {
         return 2; // meter gol
-    } else if (isSeeingBall()) {
+    } else if (vision.isSeeingBall(data)) {
         return 3; // ir hacia la pelota
     }
-    else if(isSeeingBothGoals()){
+    else if(vision.isSeeingBothGoals(data)){
         return 4;  // reubicarse usando ambas porterias como referencia 
     }
-    else if(isSeeingBackGoal()){
+    else if(vision.isSeeingBackGoal(data)){
         return 5; // reubicarse usando porteria trasera como referencia
     }
-    else if(isSeeingFrontGoal()){
+    else if(vision.isSeeingFrontGoal(data)){
         return 6; // reubicarse usando porteria frontal como referencia
     }
     else{
         return 0;  // quieto a la espera de información
     }
-
-  
-      
 }
 
-int MainInstance::getBallCatchTrajectory(int ballAngle, int ballDistance) {
-  if (ballAngle == 500) return 500;
-  if (ballDistance == 500) return ballAngle;
-
-  float closeFactor = constrain((320.0f - ballDistance) / 320.0f, 0.0f, 1.0f);
-  int offset = 90 * closeFactor;
-
-  if (ballAngle > 20 && ballAngle < 180) {
-    return wrap360(ballAngle + offset);
-  }
-  else if (ballAngle >= 180 && ballAngle < 340) {
-    return wrap360(ballAngle - offset);
-  }
-
-  return 0;
-}
-int MainInstance::getBallCatchSpeed(int ballAngle, int ballDistance) {
-  if (ballDistance == 500) return 160; 
-  if (ballAngle > 330 || ballAngle < 30){
-    return 165 + int(0.05 * float(ballDistance));
-  }
-  return 200;
-}
 void MainInstance::executeStrategy(int strategy) {
     switch (strategy) {
         case 1:
@@ -100,7 +50,7 @@ void MainInstance::executeStrategy(int strategy) {
             break;
         case 3:
             Serial4.write(3);
-            drive.move(getBallCatchTrajectory(data.ballAng, data.ballDistance), getBallCatchSpeed(data.ballAng, data.ballDistance), data.orientationError); // Lógica para ir hacia la pelota
+            drive.move(vision.getBallCatchTrajectory(data.ballAng, data.ballDistance), vision.getBallCatchSpeed(data.ballAng, data.ballDistance), data.orientationError); // Lógica para ir hacia la pelota
             break;
         case 4:
         case 5:
@@ -116,6 +66,7 @@ void MainInstance::executeStrategy(int strategy) {
             break;
     }
 }
+
 bool MainInstance::receiveInfoFromCameraTeensy(HardwareSerial &port, Data &info) {
   static uint8_t state = 0;
   static Data incoming;
@@ -206,23 +157,6 @@ int MainInstance::correctLineAngle(int angle) {
   return (angle + 90) % 360;
 }
 
-int MainInstance::getEuclideanDistance(int x, int y) {
-  if (x == 500 || y == 500) {
-    return 500; // No hay información válida
-  }
-  return sqrt(pow(x - 160, 2) + pow(y - 120, 2));
-}
-
-
-Vector MainInstance::sumVectors(Vector &v1, Vector &v2) {
-  if (v1.angle == 500 || v1.magnitude == 500 || v2.angle == 500 || v2.magnitude == 500) {
-    return {500,500}; // No hay información válida
-  }
-  int x = v1.magnitude * cos(radians(v1.angle)) + v2.magnitude * cos(radians(v2.angle));
-  int y = v1.magnitude * sin(radians(v1.angle)) + v2.magnitude * sin(radians(v2.angle));
-  int resultAngle = atan2(y, x) * 180 / PI;
-  return   {wrap360(resultAngle), (int)sqrt(x * x + y * y)};
-}
 
 
 void MainInstance::turnTowardsGoalSmooth(GoalInfo &goal) {
@@ -240,61 +174,50 @@ void MainInstance::turnTowardsGoalSmooth(GoalInfo &goal) {
   drive.move(500, 0, rotation);
 }
 
-int MainInstance::getErrorTowardsGoal(GoalInfo &goal, int currentHeading) {
-  if (goal.coordinates.angle == 500) return 0; // No hay información válida
-  int error = wrap180(goal.coordinates.angle - currentHeading); // Suponiendo que el drive considera 0° como "hacia adelante"
-  return error;
-}
 
-int MainInstance::smoothGoalAngle(int newAngle, int currentHeading) {
-  static float smoothedAngle = 500;
-  static unsigned long lastTime = 0;
 
-  const float maxSpeedDegPerSec = 15.0; 
+int MainInstance::smoothGoalAngle(int setPointDif, int currentSetPoint, int heading) {
+  static int objective = 0;
+  static int actualObjective = 0;
+  static bool initialized = false;
+  static elapsedMillis changeTimer;
 
-  unsigned long now = millis();
-
-  if (lastTime == 0) {
-    lastTime = now;
-  }
-
-  float dt = (now - lastTime) / 1000.0f;
-  lastTime = now;
-
-  if (dt <= 0 || dt > 0.1f) {
-    dt = 0.01f;
-  }
-
-  if (newAngle == 500) {
-    smoothedAngle = 500;
+  if (setPointDif == 500 || currentSetPoint == 500 || heading == 500) {
+    objective = 0;
+    actualObjective = 0;
+    initialized = false;
+    changeTimer = 0;
     return 500;
   }
 
-  float targetAngle = wrap180(newAngle);
 
-  if (smoothedAngle == 500) {
-    smoothedAngle = 0;
+  objective = wrap360(currentSetPoint - setPointDif);
+
+  if (!initialized) {
+    actualObjective = objective;
+    initialized = true;
+    changeTimer = 0;
   }
 
-  float error = wrap180(targetAngle - smoothedAngle);
-  float maxStep = maxSpeedDegPerSec * dt;
+  if (changeTimer >= 100) {
+    int difference = wrap180(objective - actualObjective);
 
-  if (error > maxStep) {
-    error = maxStep;
+    if (difference > 0) {
+      actualObjective++;
+    } else if (difference < 0) {
+      actualObjective--;
+    }
+
+    actualObjective = wrap360(actualObjective);
+    changeTimer = 0;
   }
-  else if (error < -maxStep) {
-    error = -maxStep;
-  }
 
-  smoothedAngle = wrap180(smoothedAngle + error);
-
-  return (int)roundf(smoothedAngle);
+  return wrap180(actualObjective - heading);
 }
-
 void MainInstance::goToGoal(Data &info) {
   if (info.frontGoal.coordinates.angle == 500) return; // No hay información válida
 
-  int goalError = getErrorTowardsGoal(info.frontGoal, data.orientationError);
+  int goalError = vision.getErrorTowardsGoal(info.frontGoal, data.orientationError);
 
   drive.move(info.frontGoal.coordinates.angle,180, goalError);
 }
@@ -313,28 +236,18 @@ void MainInstance::tryScoring(Data &info) {
   }
 
 }
-bool MainInstance::filterHaveBall(bool haveBall, elapsedMillis &timer) {
-  if (data.ballAng == 500) {
-    return false; // Si no vemos la pelota, asumimos que no la tenemos
-  }
-  if (haveBall) {
-    timer = 0; 
-    return true;
-  } else {
-    return timer < BALL_DEBOUNCE_MS; 
-  }
-}
+
 void MainInstance::filterData() {
     data.lineAng = correctLineAngle(data.lineAng);
-    data.haveBall = filterHaveBall(data.haveBall, haveBallTimer);
-    data.frontGoal.coordinates.angle = getGoalAngle(data.frontGoal.x, data.frontGoal.y);
+    data.haveBall = vision.filterHaveBall(data.haveBall, haveBallTimer,data);
+    data.frontGoal.coordinates.angle = vision.getGoalAngle(data.frontGoal.x, data.frontGoal.y);
     data.frontGoal.coordinates.magnitude = getEuclideanDistance(data.frontGoal.x, data.frontGoal.y);
-    data.backGoal.coordinates.angle  = getGoalAngle(data.backGoal.x, data.backGoal.y);
+    data.backGoal.coordinates.angle  = vision.getGoalAngle(data.backGoal.x, data.backGoal.y);
     data.backGoal.coordinates.magnitude = getEuclideanDistance(data.backGoal.x, data.backGoal.y);    
-    data.frontGoal.proportionY = getProportionY(data.frontGoal);
-    data.frontGoal.proportionX = getProportionX(data.frontGoal);
-    data.backGoal.proportionY = getProportionY(data.backGoal);
-    data.backGoal.proportionX = getProportionX(data.backGoal);
+    data.frontGoal.proportionY = vision.getProportionY(data.frontGoal);
+    data.frontGoal.proportionX = vision.getProportionX(data.frontGoal);
+    data.backGoal.proportionY = vision.getProportionY(data.backGoal);
+    data.backGoal.proportionX = vision. getProportionX(data.backGoal);
 }
 void MainInstance::init()
 {  
@@ -377,25 +290,16 @@ void MainInstance::getIncomingData() {
     receiveInfoFromCameraTeensy(Serial4, data);
 }
 
-int MainInstance::getGoalAngle(int inputX, int inputY) {
-    // Convierte las coordenadas del objetivo en un ángulo relativo al drive.
-    if (inputX == 500 || inputY == 500) {
-        return 500; // No hay información válida
-    }
-    int resultAng = atan2(inputY - 120 ,inputX - 160) * 180 / PI;
-    return wrap360(resultAng - 90);
 
-}
 
 void MainInstance::update() 
 {   
     digitalWrite(13,HIGH);
-    int error = bno.getRLHeadingAuto(100);
     data.heading = bno.getHeadingAuto(100);
-    data.orientationError = error;
+    data.orientationError = getOrientationError(data);
     //Leer boton 
     if(digitalRead(0)){
-    bno.setReference();
+      getReferenceBNO(data);
     }
 
     getIncomingData();
