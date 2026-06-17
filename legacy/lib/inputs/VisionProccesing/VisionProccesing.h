@@ -1,10 +1,11 @@
 #ifndef VISIONPROCCESING_H
 #define VISIONPROCCESING_H
 
-#include "dataTypes.h"
+#include "../../utils/dataTypes.h"
 #include <elapsedMillis.h>
+#include "../../utils/definitions.h"
 #include "utils.h"
-#include "definitions.h"
+
 class VisionProccesing {
     public:
         VisionProccesing();

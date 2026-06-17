@@ -39,7 +39,7 @@ int VisionProccesing::getBallCatchTrajectory(int ballAngle, int ballDistance) {
   if (ballAngle == 500) return 500;
   if (ballDistance == 500) return ballAngle;
 
-  float closeFactor = constrain((320.0f - ballDistance) / 320.0f, 0.0f, 1.0f);
+  float closeFactor = constrain((400.0f - ballDistance) / 400.0f, 0.0f, 1.0f);
   int offset = 90 * closeFactor;
 
   if (ballAngle > 20 && ballAngle < 180) {
@@ -51,12 +51,26 @@ int VisionProccesing::getBallCatchTrajectory(int ballAngle, int ballDistance) {
 
   return 0;
 }
+
 int VisionProccesing::getBallCatchSpeed(int ballAngle, int ballDistance) {
-  if (ballDistance == 500) return 160; 
-  if (ballAngle > 330 || ballAngle < 30){
-    return 165 + int(0.05 * float(ballDistance));
+  if (ballDistance == OUT_OF_RANGE) return BASE_BALL_IN_FRONT_PWM;
+
+  float normalizedDistance = constrain(float(ballDistance) / 400.0f, 0.0f, 1.0f);
+  float nonLinearResponse = pow(normalizedDistance, 0.45f);
+
+  if (ballAngle < 330 && ballAngle > 30){
+    return constrain(
+      BASE_CHASE_PWM + int((230 - BASE_CHASE_PWM) * nonLinearResponse),
+      0,
+      230
+    );
   }
-  return 200;
+
+  return constrain(
+    BASE_BALL_IN_FRONT_PWM + int((230 - BASE_BALL_IN_FRONT_PWM) * nonLinearResponse),
+    0,
+    230
+  );
 }
 
 int VisionProccesing::getErrorTowardsGoal(GoalInfo &goal, int currentHeading) {
@@ -67,7 +81,7 @@ int VisionProccesing::getErrorTowardsGoal(GoalInfo &goal, int currentHeading) {
 
 
 bool VisionProccesing::filterHaveBall(bool haveBall, elapsedMillis &timer, Data &verify) {
-  if (verify.ballAng == 500) {
+  if (verify.ballAng == 500 || (verify.ballAng > 30 && verify.ballAng < 320)) {
     return false; // Si no vemos la pelota, asumimos que no la tenemos
   }
   if (haveBall) {

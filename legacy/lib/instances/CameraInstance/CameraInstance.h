@@ -3,11 +3,11 @@
 
 #include <Arduino.h>
 #include <cmath>
-#include "camera/OpenMVStream.h"
-#include "camera/UnitVStream.h"
-#include <utils.h>
-#include "ballProccesing.h"
-#include "HardWareSerial.h"
+#include "../../camera/include/camera/OpenMVStream.h"
+#include "../../camera/include/camera/UnitVStream.h"
+#include "../../utils/utils.h"
+#include "../../ballProccesing/ballProccesing.h"
+#include "HardwareSerial.h"
 
 #define BALL_OUT_OF_RANGE 500
 #define CAMERA_RESOLUTION_WIDTH 320
@@ -16,6 +16,7 @@
 #define DRIBBLER1 3
 #define DRIBBLER2 4
 #define LED_PIN 13
+#define BUTTON_PIN 9
 
 struct CameraData {
     int ballX = BALL_OUT_OF_RANGE;
@@ -52,7 +53,7 @@ private:
     int whereIsBall();
     int calcRawBallAngle();
     int calcBallDistance();
-    void kick();
+    void kick(int trigger = 0);
     void turnOnDribbler();
     void turnOffDribbler();
     void sendInfoToMain();

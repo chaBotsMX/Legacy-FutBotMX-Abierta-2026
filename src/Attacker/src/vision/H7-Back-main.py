@@ -7,7 +7,7 @@ thresholds = [
 ]
 
 goalTresholds = [
-   (58, 76, -87, 36, 33, 127),
+   (0, 36, -11, 127, -128, -10),
 ]
 
 START_BYTE_HIGH = 0xAA
@@ -18,13 +18,14 @@ uart = UART(1, 115200)
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
-sensor.set_auto_blc(False, regs=(129, 132, 134, 133, 128, 132, 120, 128))
-sensor.set_auto_gain(False, gain_db=10)
-sensor.set_auto_exposure(False, exposure_us=6576)
-sensor.set_auto_whitebal(False, rgb_gain_db=(6.0, 3.0, 6.0))
 
-sensor.set_brightness(1)
-sensor.set_saturation(0)
+#sensor.set_auto_blc(False, regs=(129, 132, 134, 133, 128, 132, 120, 128))
+sensor.set_auto_gain(False, gain_db=15)
+sensor.set_auto_exposure(False, exposure_us=6000)
+sensor.set_auto_whitebal(False, rgb_gain_db=(8.75332, 3.0206, 9.41438))
+
+sensor.set_brightness(0)
+sensor.set_saturation(3)
 sensor.set_contrast(0)
 
 
@@ -43,7 +44,7 @@ ballInRobot = False
 
 packet = bytearray(12)
 
-ROI = (0, 0, 320, 180)
+ROI = (0, 0, 320, 200)
 
 COURT_X_MIN = 0
 COURT_X_MAX = 320
@@ -52,8 +53,8 @@ COURT_Y_MIN = 10
 COURT_CENTER_X = 160
 COURT_HALF_WIDTH = 145
 
-COURT_BOTTOM_CENTER = 188
-COURT_BOTTOM_SIDE = 120
+COURT_BOTTOM_CENTER = 200
+COURT_BOTTOM_SIDE = 150
 
 
 BALL_TOP_TOUCH_Y = 3
@@ -249,6 +250,6 @@ while True:
 
     uart.write(packet)
 
-    print(sensor.get_rgb_gain_db())
+    print(sensor.get_gain_db())
 
 

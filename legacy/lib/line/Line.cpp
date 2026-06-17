@@ -53,22 +53,14 @@ int Line::getLineSector(float lineAngle) {
 }
 
 int Line::lineSwitch(int sector, int lastSector) {
-    //Funcion que detecta si se paso la mitad de la linea
-    //si se paso, regresa el sector inicial en vez del actual.
-    int angle = sector * SECTOR_ANGLE_STEP;
-
-    if (lastSector <= 3 && 3 + lastSector <= sector && sector <= 8 + lastSector) {
-      if (sector == 3) angle = 90;
-      else angle = lastSector * 30;
-    }
-    else if (4 <= lastSector && lastSector <= 8 && sector <= lastSector - 4 || lastSector + 3 <= sector) {
-      angle = lastSector * 30;
-    }
-    else if (9 <= lastSector && lastSector - 9 <= sector && sector <= lastSector - 4) {
-      angle = lastSector * 30;
-    }
-
-    return (angle % 360 + 360) % 360;
+  //Funcion que detecta si se paso la mitad de la linea
+  //Se cambio al uso de producto punto para saber si los vectores inicial y ultimo son opuestos o si aun estan suficientemente alineados
+  float angleDiff = float(lastSector - sector) * SECTOR_ANGLE_STEP;
+  float dot = cos(radians(angleDiff));
+  if(dot < 0){
+    return lastSector * 30;
+  }
+  return sector * 30;
 }
 
 

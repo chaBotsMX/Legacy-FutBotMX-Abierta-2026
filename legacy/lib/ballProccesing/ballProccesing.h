@@ -2,12 +2,12 @@
 #define BALLPROCCESING_H
 
 
-#include "utils.h"
+#include "../utils/utils.h"
 
 #define INVALID_DATA 500
 #define DRIBBLER_AREA_X_MIN 140
 #define DRIBBLER_AREA_X_MAX 200
-#define DRIBBLER_AREA_Y_MAX 12
+#define DRIBBLER_AREA_Y_MAX 15
 
 #define QVGA_WIDTH 320
 #define QVGA_HEIGHT 240
@@ -29,16 +29,11 @@ inline bool haveBall(int verifyX, int verifyY) {
 
 inline int getGoalAngle(int inputX, int inputY) {
   int resultAng = 500;
-  if(inputX != INVALID_DATA || inputY != INVALID_DATA){
-
-  if (inputX != INVALID_DATA) {
+  if(inputX != INVALID_DATA && inputY != INVALID_DATA){
     resultAng = atan2(inputY - (QVGA_HEIGHT / 2),inputX - (QVGA_WIDTH / 2)) * 180 / PI;
     return wrap360(resultAng - 90);
   }
-  }
-  else{
-    return 500;
-  }
+  return 500;
 }
 
 

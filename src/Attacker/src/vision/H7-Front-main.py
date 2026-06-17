@@ -19,12 +19,12 @@ sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
 sensor.set_auto_blc(False, regs=(129, 132, 134, 133, 128, 132, 120, 128))
-sensor.set_auto_gain(False, gain_db=15)
+sensor.set_auto_gain(False, gain_db=10)
 sensor.set_auto_exposure(False, exposure_us=6576)
 sensor.set_auto_whitebal(False, rgb_gain_db=(6.0, 3.0, 6.0))
 
 sensor.set_brightness(1)
-sensor.set_saturation(1)
+sensor.set_saturation(0)
 sensor.set_contrast(0)
 
 
@@ -249,6 +249,6 @@ while True:
 
     uart.write(packet)
 
-    print(sensor.get_rgb_gain_db()) 
+    print(sensor.get_rgb_gain_db())
 
 

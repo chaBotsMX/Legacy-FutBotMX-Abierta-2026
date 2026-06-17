@@ -27,9 +27,9 @@ int CameraInstance::whereIsBall() {
   if(front.ballX != BALL_OUT_OF_RANGE && front.ballY != BALL_OUT_OF_RANGE){
     return 0;
   }
-  /*else if(haveBall(back.ballX, back.ballY)){
+  else if(back.ballX != BALL_OUT_OF_RANGE && back.ballY != BALL_OUT_OF_RANGE){
     return 1;
-  }*/
+  }
   else if(left.ballX != BALL_OUT_OF_RANGE && left.ballY != BALL_OUT_OF_RANGE){
     return 2;
   }
@@ -64,21 +64,31 @@ int CameraInstance::calcBallDistance() {
       case 0:
         return getBallDistance(front.ballX, front.ballY, 0);
       case 1:
-        return getBallDistance(back.ballX, back.ballY, 1);
+        return getBallDistance(back.ballX, back.ballY, 0);
       case 2:
-        return getBallDistance(left.ballX, left.ballY, 2);
+        return getBallDistance(left.ballX, left.ballY, 1);
       case 3:
-        return getBallDistance(right.ballX, right.ballY, 3);
+        return getBallDistance(right.ballX, right.ballY, 1);
     }
   }
   return BALL_OUT_OF_RANGE;
 }
 
 
-void CameraInstance::kick(){
-  digitalWrite(KICK, HIGH);
-  delay(10);
-  digitalWrite(KICK, LOW);
+void CameraInstance::kick(int trigger) {
+  static elapsedMillis kickTimer = 0;
+  static bool kicking = false;
+
+  if (trigger == 1 && !kicking) {
+    kickTimer = 0;
+    kicking = true;
+    digitalWrite(KICK, HIGH);
+  }
+
+  if (kicking && kickTimer >= 10) {
+    digitalWrite(KICK, LOW);
+    kicking = false;
+  }
 }
 
 void CameraInstance::turnOnDribbler(){
@@ -92,14 +102,28 @@ void CameraInstance::turnOffDribbler(){
 }
 
 void CameraInstance::sendInfoToMain(){
+  int whereball = whereIsBall();
+  if(whereball == -1){
+    whereball = 100;
+  }
+  uint8_t ballAngle = calcRawBallAngle() / 2;
+  uint8_t hasBall = haveBall(front.ballX, front.ballY);
+  uint8_t ballDistance = calcBallDistance() / 2;
+  uint8_t frontGoalX = front.goalX / 2;
+  uint8_t frontGoalY = front.goalY / 2;
+  uint8_t backGoalX = back.goalX / 2;
+  uint8_t backGoalY = back.goalY / 2;
+  uint8_t checksum = ballAngle ^ hasBall ^ ballDistance ^ frontGoalX ^ frontGoalY ^ backGoalX ^ backGoalY;
+
   Serial5.write(0xAA);
-  Serial5.write(calcRawBallAngle() / 2);
-  Serial5.write(haveBall(front.ballX, front.ballY));
-  Serial5.write(calcBallDistance() / 2);
-  Serial5.write(front.goalX /2);
-  Serial5.write(front.goalY /2);
-  Serial5.write(back.goalX /2);
-  Serial5.write(back.goalY /2);
+  Serial5.write(ballAngle);
+  Serial5.write(hasBall);
+  Serial5.write(ballDistance);
+  Serial5.write(frontGoalX);
+  Serial5.write(frontGoalY);
+  Serial5.write(backGoalX);
+  Serial5.write(backGoalY);
+  Serial5.write(checksum);
   Serial5.write(0x55);
 }
 
@@ -116,11 +140,14 @@ void CameraInstance::init() {
   pinMode(DRIBBLER1, OUTPUT);
   pinMode(DRIBBLER2, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN,INPUT);
 }
 
 
 
 void CameraInstance::update() {
+  kick();
+  
   OutPutHandler();
   updateCameras();
   Serial.print("ballAngle=");
@@ -135,6 +162,12 @@ void CameraInstance::update() {
   Serial.print(back.goalX);
   Serial.print(" back.goalY=");
   Serial.println(back.goalY);
+  Serial.print("ballX: ");
+  Serial.print(front.ballX);
+  Serial.print(" bally: ");
+  Serial.print(front.ballY);
+  Serial.print( "tiene pelota: ");
+  Serial.println(haveBall(front.ballX,front.ballY));
 
   sendInfoToMain();
 }
@@ -150,10 +183,12 @@ void CameraInstance::updateOpemMVCamData(CameraData &camData, OpenMVStream &camS
     camData.goalColor = camStream.goalColor;
     camTimer = 0;
   }
-  else if (camTimer > 500) {
+  else if (camTimer > BALL_OUT_OF_RANGE) {
     digitalWrite(LED_PIN, LOW);
     camData.ballX = BALL_OUT_OF_RANGE;
     camData.ballY = BALL_OUT_OF_RANGE;
+    camData.goalX = BALL_OUT_OF_RANGE;
+    camData.goalY = BALL_OUT_OF_RANGE;
   }
 }
 
@@ -166,6 +201,8 @@ void CameraInstance::updateUnitVCamData(CameraData &camData, UnitVStream &camStr
   else if (camTimer > 500) {
     camData.ballX = BALL_OUT_OF_RANGE;
     camData.ballY = BALL_OUT_OF_RANGE;
+    camData.goalX = BALL_OUT_OF_RANGE;
+    camData.goalY = BALL_OUT_OF_RANGE;
   }
 }
 
@@ -181,7 +218,7 @@ void CameraInstance::OutPutHandler(){
     int command = Serial5.read();
     switch (command) {
       case 1:
-        kick();
+        kick(1);
         break;
       case 2:
         turnOnDribbler();

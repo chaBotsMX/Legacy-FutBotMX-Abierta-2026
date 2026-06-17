@@ -2,6 +2,7 @@
 
 CameraInstance robot;
 void setup() {
+  delay(3000);
   robot.init();
 }
 

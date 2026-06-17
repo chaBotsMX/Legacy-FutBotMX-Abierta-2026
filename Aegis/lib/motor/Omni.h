@@ -13,17 +13,20 @@
 
 #define NUM_MOTORS 4
 
-#define MOTOR_1_A 5
-#define MOTOR_1_B 4
+#define MOTOR_1_A 37
+#define MOTOR_1_B 36
 
-#define MOTOR_2_A 3
-#define MOTOR_2_B 2
+#define MOTOR_2_A 15
+#define MOTOR_2_B 14
 
-#define MOTOR_3_A 11
-#define MOTOR_3_B 10
 
+// ok
+#define MOTOR_3_A 12
+#define MOTOR_3_B 11
+
+// 4 ok
 #define MOTOR_4_A 9
-#define MOTOR_4_B 8
+#define MOTOR_4_B 10
 
 #define MOTOR_ANGLE_OFFSET 45
 
@@ -31,7 +34,7 @@
 
 
 class Omni {
-  public:
+  public: 
     Omni();
 
     void motorMove(int mot, int pot);
