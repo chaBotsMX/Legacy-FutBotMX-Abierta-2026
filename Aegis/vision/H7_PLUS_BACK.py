@@ -1,0 +1,184 @@
+import sensor
+import time
+from pyb import UART
+
+goal_thresholds = [
+    (38, 88, 40, 127, 6, 127),
+]
+
+START_BYTE_HIGH = 0xAA
+START_BYTE_LOW = 0x55
+
+uart = UART(1, 115200)
+
+sensor.reset()
+sensor.set_pixformat(sensor.RGB565)
+sensor.set_framesize(sensor.QVGA)
+
+sensor.set_auto_gain(False, gain_db=23.80)
+sensor.set_auto_exposure(False, exposure_us=21450)
+sensor.set_auto_whitebal(False, rgb_gain_db=(63.20937, 60.206, 62.60668))
+
+sensor.set_brightness(0)
+sensor.set_saturation(0)
+sensor.set_contrast(0)
+
+sensor.ioctl(sensor.IOCTL_SET_NIGHT_MODE, False)
+sensor.skip_frames(time=2000)
+
+clock = time.clock()
+
+ballX = 500
+ballY = 500
+goalX = 500
+goalY = 500
+goalColor = 0
+
+packet = bytearray(12)
+
+ROI = (0, 0, 320, 240)
+
+COURT_X_MIN = 0
+COURT_X_MAX = 320
+COURT_Y_MIN = 10
+
+COURT_CENTER_X = 160
+COURT_HALF_WIDTH = 145
+
+COURT_BOTTOM_CENTER = 240
+COURT_BOTTOM_SIDE = 200
+
+
+def court_y_limit(x):
+    dx = (x - COURT_CENTER_X) / COURT_HALF_WIDTH
+
+    if dx < -1:
+        dx = -1
+    elif dx > 1:
+        dx = 1
+
+    curve_height = COURT_BOTTOM_CENTER - COURT_BOTTOM_SIDE
+    return int(COURT_BOTTOM_CENTER - curve_height * dx * dx)
+
+
+def blob_inside_court_relaxed(blob, min_inside_ratio=0.30):
+    x0 = blob.x()
+    y0 = blob.y()
+    x1 = blob.x() + blob.w()
+    y1 = blob.y() + blob.h()
+
+    if x1 < COURT_X_MIN or x0 >= COURT_X_MAX:
+        return False
+
+    if y1 < COURT_Y_MIN:
+        return False
+
+    x0 = max(x0, COURT_X_MIN)
+    x1 = min(x1, COURT_X_MAX)
+    y0 = max(y0, COURT_Y_MIN)
+
+    if x1 <= x0 or y1 <= y0:
+        return False
+
+    total_area = 0
+    inside_area = 0
+
+    step = 4
+
+    for x in range(x0, x1, step):
+        limit_y = court_y_limit(x)
+
+        total_h = y1 - y0
+        inside_h = min(y1, limit_y) - y0
+
+        if inside_h < 0:
+            inside_h = 0
+
+        if inside_h > total_h:
+            inside_h = total_h
+
+        total_area += total_h
+        inside_area += inside_h
+
+    if total_area <= 0:
+        return False
+
+    ratio = inside_area / total_area
+
+    return ratio >= min_inside_ratio
+
+
+def draw_court_limits(img):
+    img.draw_rectangle(ROI, color=(255, 0, 0), thickness=1)
+
+    last_x = COURT_X_MIN
+    last_y = court_y_limit(last_x)
+
+    for x in range(COURT_X_MIN + 4, COURT_X_MAX, 4):
+        y = court_y_limit(x)
+        img.draw_line(last_x, last_y, x, y, color=(255, 0, 0), thickness=2)
+        last_x = x
+        last_y = y
+
+
+while True:
+    clock.tick()
+    img = sensor.snapshot()
+
+    goals = img.find_blobs(
+        goal_thresholds,
+        roi=ROI,
+        pixels_threshold=15,
+        area_threshold=15,
+        merge=True
+    )
+
+    goals = [g for g in goals if blob_inside_court_relaxed(g, 0.30)]
+
+    if goals:
+        largest_goal = max(goals, key=lambda g: g.pixels())
+
+        goalX = largest_goal.cx()
+        goalY = largest_goal.cy()
+        goalColor = 1
+
+        img.draw_rectangle(largest_goal.rect(), color=(0, 255, 0), thickness=2)
+        img.draw_cross(goalX, goalY, color=(0, 255, 0))
+        img.draw_string(5, 5, "GOAL", color=(255, 255, 0), scale=1)
+
+    else:
+        goalX = 500
+        goalY = 500
+        goalColor = 0
+
+    ballX = 500
+    ballY = 500
+
+    draw_court_limits(img)
+
+    packet[0] = START_BYTE_HIGH
+    packet[1] = START_BYTE_LOW
+
+    packet[2] = (ballX >> 8) & 0xFF
+    packet[3] = ballX & 0xFF
+
+    packet[4] = (ballY >> 8) & 0xFF
+    packet[5] = ballY & 0xFF
+
+    packet[6] = (goalX >> 8) & 0xFF
+    packet[7] = goalX & 0xFF
+
+    packet[8] = (goalY >> 8) & 0xFF
+    packet[9] = goalY & 0xFF
+
+    packet[10] = goalColor & 0xFF
+
+    checksum = 0
+    for i in range(2, 11):
+        checksum ^= packet[i]
+
+    packet[11] = checksum
+
+    uart.write(packet)
+
+    print(clock.fps())
