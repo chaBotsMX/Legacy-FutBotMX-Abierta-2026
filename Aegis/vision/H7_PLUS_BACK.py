@@ -3,25 +3,26 @@ import time
 from pyb import UART
 from pyb import LED
 goal_thresholds = [
-    (26, 80, -31, 28, 19, 127)
+    (32, 56, -15, 127, 19, 127)
 ]
 
 START_BYTE_HIGH = 0xAA
 START_BYTE_LOW = 0x55
 
 uart = UART(1, 115200)
+ROI = (0, 100, 240, 320)
+led = LED(2);
 
-led = LED(1);
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
 
 sensor.set_auto_gain(False, gain_db=23.80)
 sensor.set_auto_exposure(False, exposure_us=21450)
-sensor.set_auto_whitebal(False, rgb_gain_db=(63.20937, 60.206, 62.60668))
+sensor.set_auto_whitebal(False, rgb_gain_db=(63.72782, 60.206, 62.47702))
 
-sensor.set_brightness(0)
-sensor.set_saturation(0)
+sensor.set_brightness(2)
+sensor.set_saturation(2)
 sensor.set_contrast(0)
 
 sensor.ioctl(sensor.IOCTL_SET_NIGHT_MODE, False)
@@ -53,8 +54,9 @@ while True:
 
     goals = img.find_blobs(
         goal_thresholds,
-        pixels_threshold=15,
-        area_threshold=15,
+        roi=ROI,
+        pixels_threshold=50,
+        area_threshold=50,
         merge=True
     )
 
@@ -102,5 +104,5 @@ while True:
 
     uart.write(packet)
 
-    print(clock.fps())
+    print(sensor.get_rgb_gain_db())
     led.on();

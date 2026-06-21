@@ -3,7 +3,7 @@ import time
 from pyb import UART
 
 thresholds = [
-    (38, 88, 40, 127, 6, 127),
+    (23, 88, 14, 127, -128, 127),
 ]
 
 goalTresholds = [
@@ -18,12 +18,12 @@ uart = UART(1, 115200)
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
-sensor.set_auto_blc(False, regs=[131, 132, 127, 127, 95, 103, 163, 162])
-sensor.set_auto_gain(False, gain_db=10)
-sensor.set_auto_exposure(False, exposure_us=6576)
+#sensor.set_auto_blc(False, regs=[131, 132, 127, 127, 95, 103, 163, 162])
+sensor.set_auto_gain(False, gain_db=20)
+sensor.set_auto_exposure(False, exposure_us=8000)
 sensor.set_auto_whitebal(False, rgb_gain_db=(-6.0206, -5.622704, -1.887455))
 
-sensor.set_brightness(0)
+sensor.set_brightness(1)
 sensor.set_saturation(0)
 sensor.set_contrast(0)
 
@@ -43,7 +43,7 @@ ballInRobot = False
 
 packet = bytearray(12)
 
-ROI = (0, 0, 320, 180)
+ROI = (0, 0, 320, 220)
 
 COURT_X_MIN = 0
 COURT_X_MAX = 320
@@ -52,8 +52,8 @@ COURT_Y_MIN = 10
 COURT_CENTER_X = 160
 COURT_HALF_WIDTH = 145
 
-COURT_BOTTOM_CENTER = 188
-COURT_BOTTOM_SIDE = 120
+COURT_BOTTOM_CENTER = 220
+COURT_BOTTOM_SIDE = 180
 
 
 BALL_TOP_TOUCH_Y = 3
